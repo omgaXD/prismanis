@@ -1,0 +1,9 @@
+@layer base {
+    body > header {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        padding: var(--space-2) var(--space-4);
+        gap: var(--space-3);
+    }
+}

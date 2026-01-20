@@ -1,0 +1,45 @@
+@layer base {
+    body {
+        font-size: var(--text-xl);
+        background-color: var(--color-stone-900);
+        color: var(--color-white);
+
+        header {
+            background-color: var(--color-stone-800);
+        }
+    }
+
+    a {
+        text-decoration: underline;
+    }
+
+    .card {
+        background-color: var(--color-stone-800);
+        border-radius: var(--radius-lg);
+        padding: calc(var(--spacing) * 4);
+    }
+
+    .default {
+        border: 1px solid var(--color-stone-600);
+        background-color: var(--color-stone-800);
+        color: var(--color-stone-200);
+
+        &:has(:checked) {
+            background-color: var(--color-stone-700);
+            border-color: var(--color-blue-300);
+            color: var(--color-white);
+        }
+    }
+
+    .danger {
+        border: 1px solid var(--color-red-900);
+        background-color: var(--color-red-950);
+        color: var(--color-red-50);
+
+        &:has(:checked) {
+            background-color: var(--color-red-700);
+            border-color: var(--color-red-300);
+            color: var(--color-white);
+        }
+    }
+}

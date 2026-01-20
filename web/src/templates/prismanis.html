@@ -1,0 +1,18 @@
+{{ define "content" }}
+<div class="relative">
+    <canvas id="canvas"></canvas>
+    <div class="toolbox absolute top-2 left-2 flex flex-col gap-2">
+        <label class="icon-btn default">
+            <i class="las la-paint-brush"></i>
+            <input type="radio" value="toggle-draw" name="tool" class="hidden" checked />
+        </label>
+        <label class="icon-btn default">
+            <i class="las la-lightbulb"></i>
+            <input type="radio" value="toggle-light-source" name="tool" class="hidden" />
+        </label>
+        <button class="icon-btn danger" id="clear-btn">
+            <i class="las la-trash"></i>
+        </button>
+    </div>
+</div>
+{{ end }}
