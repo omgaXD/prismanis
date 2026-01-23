@@ -1,3 +1,4 @@
+import { EXAGGERATED_GLASS_MATERIAL, GLASS_MATERIAL, Material } from "./material";
 import { Rect, Vec2, Curve } from "./primitives";
 
 type BaseEvent = {};
@@ -273,6 +274,7 @@ export function curveAdderFactory(scene: Scene) {
 			type: "curve",
 			curve: curve,
 			transform: transform,
+			material: EXAGGERATED_GLASS_MATERIAL
 		};
 
 		scene.add(sceneObject);
@@ -311,6 +313,7 @@ export type SceneObjectBase = {
 export type SceneCurveObject = SceneObjectBase & {
 	type: "curve";
 	curve: Curve;
+	material: Material;
 };
 
 export type SceneObject = SceneCurveObject;

@@ -2,6 +2,7 @@ import { RaycastTool } from "./tools/raycastTool";
 import { PaintTool } from "./tools/paintTool";
 import { Curve, Vec2 } from "./primitives";
 import { Scene, SceneCurveObject, Transform } from "./scene";
+import { wavelengthToRGB } from "./helpers";
 
 const DEFAULT_THICKNESS = 8;
 const DEFAULT_STROKE_COLOR = "#ffffff";
@@ -58,10 +59,11 @@ export class Renderer {
 			}
 		});
 		if (paint.cur) {
-			drawCurve(this.ctx, paint.cur);
+			drawCurve(this.ctx, paint.cur, "#ffff00");
 		}
 		for (const ray of lightRaycaster.rays) {
-			drawCurve(this.ctx, ray);
+			const {r,g,b} = wavelengthToRGB(ray.wavelength);
+			drawCurve(this.ctx, ray, `rgba(${r}, ${g}, ${b}, ${ray.opacity})`, true);
 		}
 	}
 
@@ -163,13 +165,14 @@ export function drawCurveObject(ctx: CanvasRenderingContext2D, curveObj: SceneCu
 	const curve = curveObj.curve;
 	if (curve.points.length === 0) return;
 
-	const thickness = curve.thickness ?? DEFAULT_THICKNESS;
-	const color = curve.color ?? DEFAULT_STROKE_COLOR;
+	const thickness = DEFAULT_THICKNESS;
+	const strokeColor = curveObj.material.strokeColor;
+	const fillColor = curveObj.material.fillColor;
 
 	ctx.save();
 	ctx.lineWidth = thickness;
-	ctx.strokeStyle = color;
-	ctx.fillStyle = DEFAULT_FILL_COLOR;
+	ctx.strokeStyle = strokeColor;
+	ctx.fillStyle = fillColor;
 
 	const pos = curveObj.transform.getPosition();
 	const rot = curveObj.transform.getRotation();
@@ -194,15 +197,17 @@ export function drawCurveObject(ctx: CanvasRenderingContext2D, curveObj: SceneCu
 	ctx.restore();
 }
 
-export function drawCurve(ctx: CanvasRenderingContext2D, curve: Curve) {
+export function drawCurve(ctx: CanvasRenderingContext2D, curve: Curve, color: string = DEFAULT_STROKE_COLOR, lightBlending: boolean = false) {
 	if (curve.points.length === 0) return;
 
-	const thickness = curve.thickness ?? DEFAULT_THICKNESS;
-	const color = curve.color ?? DEFAULT_STROKE_COLOR;
+	const thickness = DEFAULT_THICKNESS;
 
 	ctx.save();
 	ctx.lineWidth = thickness;
 	ctx.strokeStyle = color;
+	if (lightBlending) {
+		ctx.globalCompositeOperation = "screen";
+	}
 
 	ctx.beginPath();
 	ctx.moveTo(curve.points[0].x, curve.points[0].y);

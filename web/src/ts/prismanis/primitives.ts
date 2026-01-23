@@ -11,6 +11,4 @@ export type Rect = Vec2 &{
 export type Curve = {
     points: Vec2[];
     isClosed: boolean;
-    thickness?: number;
-    color?: string;
 };
