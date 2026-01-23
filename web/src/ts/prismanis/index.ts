@@ -1,6 +1,6 @@
 import { Curve, drawCurve, drawCurveObject, Paint } from "./drawing";
 import { LightRaycaster } from "./light";
-import { curveAdderFactory, Scene, SceneObject, Transform } from "./scene";
+import { curveAdderFactory, Scene } from "./scene";
 import { initPaintTools, initLightRaycaster, setupToolSwitcher, setupClearButton } from "./toolSwitcher";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;

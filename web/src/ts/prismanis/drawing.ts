@@ -12,9 +12,11 @@ export type Curve = {
 const DEFAULT_THICKNESS = 8;
 const DEFAULT_STROKE_COLOR = "#ffffff";
 const DEFAULT_FILL_COLOR = "#ffffff88";
+const DEFAULT_DRAWING_THRESHOLD = 20;
 
 export type PaintOptions = {
 	closedDistanceThreshold: number;
+	drawingThreshold: number;
 	canvas: HTMLCanvasElement;
 	onCurveClosed?: (curve: Curve) => void;
 };
@@ -24,7 +26,11 @@ export class Paint {
 
 	enabled: boolean = true;
 
-	constructor(private o: PaintOptions) {}
+	constructor(private o: PaintOptions) {
+		if (!this.o.drawingThreshold) {
+			this.o.drawingThreshold = DEFAULT_DRAWING_THRESHOLD;
+		}
+	}
 
 	init() {
 		this.o.canvas.addEventListener("mousedown", this.startPath.bind(this));
@@ -71,7 +77,27 @@ export class Paint {
 		if (!this.cur) return;
 		const rect = this.o.canvas.getBoundingClientRect();
 		const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-		this.cur.points.push(point);
+
+		if (this.cur.points.length === 0) {
+			this.cur.points.push(point);
+			return;
+		}
+		
+		const lastPoint = this.cur.points[this.cur.points.length - 1];
+		const distance = dist(lastPoint, point);
+		
+		if (distance > this.o.drawingThreshold) {
+			// Interpolate points between lastPoint and point
+			const numSegments = Math.ceil(distance / this.o.drawingThreshold);
+			for (let i = 1; i <= numSegments; i++) {
+				const t = i / numSegments;
+				const interpolated = {
+					x: lastPoint.x + (point.x - lastPoint.x) * t,
+					y: lastPoint.y + (point.y - lastPoint.y) * t,
+				};
+				this.cur.points.push(interpolated);
+			}
+		}
 	}
 }
 
@@ -172,6 +198,14 @@ export function drawCurveObject(ctx: CanvasRenderingContext2D, curveObj: SceneCu
 	ctx.closePath();
 	ctx.fill();
 	ctx.stroke();
+
+	ctx.fillStyle = "#ff0000";
+	for (let i = 0; i < curve.points.length; i++) {
+		const p = curve.points[i];
+		ctx.beginPath();
+		ctx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
+		ctx.fill();
+	}
 	ctx.restore();
 }
 

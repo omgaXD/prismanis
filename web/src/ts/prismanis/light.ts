@@ -1,11 +1,14 @@
 import { Curve } from "./drawing";
-import { dist as distance } from "./helpers";
+import { dist as distance, rotateVec } from "./helpers";
 import { Vec2 } from "./primitives";
-import { Scene } from "./scene";
 
 export type LightRaycasterOptions = {
 	getTransformedCurves: () => Curve[];
 	canvas: HTMLCanvasElement;
+	/**
+	 * radians from the right (0 rad) going counter-clockwise
+	 */
+	lightSourceAngles?: number[];
 };
 
 function normalize(p: Vec2): Vec2 {
@@ -44,22 +47,37 @@ export class LightRaycaster {
 				return;
 			}
 			const rect = this.o.canvas.getBoundingClientRect();
-            const mouse: Vec2 = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+			const mouse: Vec2 = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
 			let at: Vec2;
-			let dir: Vec2;
+			let mainDir: Vec2;
 			if (this.fixedAt == null) {
-                at = mouse;
-				dir = { x: 1, y: 0 };
+				at = mouse;
+				mainDir = { x: 1, y: 0 };
 			} else {
-                at = this.fixedAt;
-				dir = normalize({
+				at = this.fixedAt;
+				mainDir = normalize({
 					x: mouse.x - this.fixedAt.x,
 					y: mouse.y - this.fixedAt.y,
 				});
 			}
 			this.transformedCurves = this.o.getTransformedCurves();
-			const rayCurve = this.ray(at, dir);
-			this.rays = [rayCurve];
+
+			this.rays = [];
+			const angles = this.o.lightSourceAngles || [
+				0,
+				Math.PI / 100,
+				-Math.PI / 100,
+				Math.PI / 200,
+				-Math.PI / 200,
+			];
+			for (const angle of angles) {
+				const dir = {
+					x: rotateVec(mainDir, angle).x,
+					y: rotateVec(mainDir, angle).y,
+				};
+				const ray = this.ray(at, dir);
+				this.rays.push(ray);
+			}
 		});
 	}
 
