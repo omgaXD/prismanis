@@ -1,21 +1,62 @@
 import { Curve } from "./painting";
 import { Rect, Vec2 } from "./primitives";
 
+type BaseEvent = {};
+
+type HistoryAvailabilityChangedEvent = BaseEvent & {
+	type: "history-availability-changed";
+	which: "undo" | "redo";
+	available: boolean;
+};
+
+export type SceneEvent = HistoryAvailabilityChangedEvent;
+
 export class Scene {
 	private objects: SceneObject[];
 	selectedObjectIds: string[];
-    past: SceneAction[] = [];
-    future: SceneAction[] = [];
-    historyMutationInProgress: boolean = false;
+	past: SceneAction[] = [];
+	future: SceneAction[] = [];
+	historyMutationInProgress: boolean = false;
+	private historyAvailabilityChangedListeners: ((event: HistoryAvailabilityChangedEvent) => void)[] = [];
 
 	constructor() {
 		this.objects = [];
 		this.selectedObjectIds = [];
 	}
 
-    getObjects(): readonly SceneObject[] {
-        return this.objects;
-    }
+	addListener<T extends SceneEvent>(type: T["type"], listener: (event: T) => void) {
+		if (type === "history-availability-changed") {
+			this.historyAvailabilityChangedListeners.push(listener as (event: HistoryAvailabilityChangedEvent) => void);
+		}
+	}
+
+	removeListener<T extends SceneEvent>(type: T["type"], listener: (event: T) => void) {
+		if (type === "history-availability-changed") {
+			this.historyAvailabilityChangedListeners = this.historyAvailabilityChangedListeners.filter(
+				(l) => l !== (listener as (event: HistoryAvailabilityChangedEvent) => void),
+			);
+		}
+	}
+
+	private notifyHistoryAvailabilityChanged(
+		type: "history-availability-changed",
+		which: "undo" | "redo",
+		available: boolean,
+	) {
+		const event: HistoryAvailabilityChangedEvent = { type, which, available };
+		for (const listener of this.historyAvailabilityChangedListeners) {
+			listener(event);
+		}
+	}
+
+	private updateHistoryAvailability() {
+		this.notifyHistoryAvailabilityChanged("history-availability-changed", "undo", this.canUndo());
+		this.notifyHistoryAvailabilityChanged("history-availability-changed", "redo", this.canRedo());
+	}
+
+	getObjects(): readonly SceneObject[] {
+		return this.objects;
+	}
 
 	getAllOfType<T extends SceneObject>(type: SceneObject["type"]): T[] {
 		return this.objects.filter((obj) => obj.type === type) as T[];
@@ -60,137 +101,147 @@ export class Scene {
 
 	clear() {
 		this.selectedObjectIds.length = 0;
-        this.remove(this.objects);
+		this.remove(this.objects);
 	}
 
-    startTransform(on: string[]): number {
-        this.pushAction({
-            type: "transform",
-            affectedObjects: on.map(id => {
-                const obj = this.getObjectById(id);
-                if (!obj) {
-                    throw new Error(`Object with ID ${id} does not exist in the scene.`);
-                }
-                return {
-                    id: id,
-                    oldTransform: obj.transform.clone(),
-                    newTransform: obj.transform.clone(),
-                };
-            }),
-        });
-        this.historyMutationInProgress = true;
-        return this.past.length - 1;
-    }
+	startTransform(on: string[]): number {
+		this.pushAction({
+			type: "transform",
+			affectedObjects: on.map((id) => {
+				const obj = this.getObjectById(id);
+				if (!obj) {
+					throw new Error(`Object with ID ${id} does not exist in the scene.`);
+				}
+				return {
+					id: id,
+					oldTransform: obj.transform.clone(),
+					newTransform: obj.transform.clone(),
+				};
+			}),
+		});
+		this.historyMutationInProgress = true;
+		return this.past.length - 1;
+	}
 
-    endTransform(of: number) {
-        this.historyMutationInProgress = false;
-        const action = this.past[of];
-        if (action && action.type === "transform") {
-            for (const affected of action.affectedObjects) {
-                const obj = this.getObjectById(affected.id);
-                if (obj) {
-                    affected.newTransform = obj.transform.clone();
-                }
-            }
-        }
-    }
+	endTransform(of: number) {
+		this.historyMutationInProgress = false;
+		const action = this.past[of];
+		if (action && action.type === "transform") {
+			for (const affected of action.affectedObjects) {
+				const obj = this.getObjectById(affected.id);
+				if (obj) {
+					affected.newTransform = obj.transform.clone();
+				}
+			}
+		}
+	}
 
-    pushAction(action: SceneAction) {
-        this.past.push(action);
-        this.future.length = 0;
-    }
+	pushAction(action: SceneAction) {
+		this.past.push(action);
+		this.future.length = 0;
+		this.updateHistoryAvailability();
+	}
 
-    add(object: SceneObject) {
-        this.objects.push(object);
-        this.pushAction({
-            type: "add",
-            object: object,
-        });
-    }
+	add(object: SceneObject) {
+		this.objects.push(object);
+		this.pushAction({
+			type: "add",
+			object: object,
+		});
+	}
 
-    remove(objects: SceneObject[] | string[] | SceneObject | string) {
-        const objsToRemove: SceneObject[] = [];
+	remove(objects: SceneObject[] | string[] | SceneObject | string) {
+		const objsToRemove: SceneObject[] = [];
 
-        if (Array.isArray(objects)) {
-            for (const objOrId of objects) {
-                const obj = typeof objOrId === "string" ? this.getObjectById(objOrId) : objOrId;
-                if (obj) {
-                    objsToRemove.push(obj);
-                }
-            }
-        } else {
-            const obj = typeof objects === "string" ? this.getObjectById(objects) : objects;
-            if (obj) {
-                objsToRemove.push(obj);
-            }
-        }
+		if (Array.isArray(objects)) {
+			for (const objOrId of objects) {
+				const obj = typeof objOrId === "string" ? this.getObjectById(objOrId) : objOrId;
+				if (obj) {
+					objsToRemove.push(obj);
+				}
+			}
+		} else {
+			const obj = typeof objects === "string" ? this.getObjectById(objects) : objects;
+			if (obj) {
+				objsToRemove.push(obj);
+			}
+		}
 
-        this.objects = this.objects.filter(obj => !objsToRemove.includes(obj));
-        this.pushAction({
-            type: "remove",
-            objects: objsToRemove,
-        });
-    }
+		this.objects = this.objects.filter((obj) => !objsToRemove.includes(obj));
+		this.pushAction({
+			type: "remove",
+			objects: objsToRemove,
+		});
+	}
 
-    undo() {
-        if (this.historyMutationInProgress) {
-            return;
-        }
+	undo() {
+		if (this.historyMutationInProgress) {
+			return;
+		}
 
-        const action = this.past.pop();
-        if (!action) {
-            return;
-        }
+		const action = this.past.pop();
+		if (!action) {
+			return;
+		}
 
-        switch (action.type) {
-            case "add":
-                this.objects = this.objects.filter(obj => obj.id !== action.object.id);
-                break;
-            case "remove":
-                this.objects.push(...action.objects);
-                break;
-            case "transform":
-                for (const affected of action.affectedObjects) {
-                    const obj = this.getObjectById(affected.id);
-                    if (obj) {
-                        obj.transform = affected.oldTransform;
-                    }
-                }
-                break;
-        }
+		switch (action.type) {
+			case "add":
+				this.objects = this.objects.filter((obj) => obj.id !== action.object.id);
+				break;
+			case "remove":
+				this.objects.push(...action.objects);
+				break;
+			case "transform":
+				for (const affected of action.affectedObjects) {
+					const obj = this.getObjectById(affected.id);
+					if (obj) {
+						obj.transform = affected.oldTransform;
+					}
+				}
+				break;
+		}
 
-        this.future.push(action);
-    }
+		this.future.push(action);
+		this.updateHistoryAvailability();
+	}
 
-    redo() {
-        if (this.historyMutationInProgress) {
-            return;
-        }
+	redo() {
+		if (this.historyMutationInProgress) {
+			return;
+		}
 
-        const action = this.future.pop();
-        if (!action) {
-            return;
-        }
+		const action = this.future.pop();
+		if (!action) {
+			return;
+		}
 
-        switch (action.type) {
-            case "add":
-                this.objects.push(action.object);
-                break;
-            case "remove":
-                this.objects = this.objects.filter(obj => !action.objects.some(o => o.id === obj.id));
-                break;
-            case "transform":
-                for (const affected of action.affectedObjects) {
-                    const obj = this.getObjectById(affected.id);
-                    if (obj) {
-                        obj.transform = affected.newTransform;
-                    }
-                }
-                break;
-        }
+		switch (action.type) {
+			case "add":
+				this.objects.push(action.object);
+				break;
+			case "remove":
+				this.objects = this.objects.filter((obj) => !action.objects.some((o) => o.id === obj.id));
+				break;
+			case "transform":
+				for (const affected of action.affectedObjects) {
+					const obj = this.getObjectById(affected.id);
+					if (obj) {
+						obj.transform = affected.newTransform;
+					}
+				}
+				break;
+		}
 
-        this.past.push(action);
-    }
+		this.past.push(action);
+		this.updateHistoryAvailability();
+	}
+
+	canUndo() {
+		return this.past.length > 0 && this.historyMutationInProgress === false;
+	}
+	canRedo() {
+		return this.future.length > 0 && this.historyMutationInProgress === false;
+	}
 }
 
 export function curveAdderFactory(scene: Scene) {
@@ -230,25 +281,25 @@ export function curveAdderFactory(scene: Scene) {
 	};
 }
 
-export type SceneActionBase = {}
+export type SceneActionBase = {};
 
 export type SceneAddObjectAction = SceneActionBase & {
-    type: "add";
+	type: "add";
 	object: SceneObject;
 };
 
 export type SceneRemoveObjectAction = SceneActionBase & {
-    type: "remove";
+	type: "remove";
 	objects: SceneObject[];
 };
 
 export type SceneTransformObjectAction = SceneActionBase & {
-    type: "transform";
+	type: "transform";
 	affectedObjects: {
-        id: string;
-        oldTransform: Transform;
-        newTransform: Transform;
-    }[];
+		id: string;
+		oldTransform: Transform;
+		newTransform: Transform;
+	}[];
 };
 
 export type SceneAction = SceneAddObjectAction | SceneRemoveObjectAction | SceneTransformObjectAction;

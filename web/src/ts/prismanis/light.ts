@@ -77,6 +77,13 @@ export class LightRaycaster {
 				this.rays.push(ray);
 			}
 		});
+
+		this.o.hlp.registerMouseLeaveListener(() => {
+			if (!this.enabled) {
+				return;
+			}
+			this.rays.length = 0;
+		});
 	}
 
 	toggle(enabled: boolean) {

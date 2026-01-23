@@ -85,6 +85,18 @@ function setupUndoRedoButtons(scene: Scene) {
 		scene.redo();
 	});
 
+	scene.addListener("history-availability-changed", (ev) => {
+		if (ev.which !== 'undo') return;
+		undoButton.disabled = !ev.available;
+	});
+	scene.addListener("history-availability-changed", (ev) => {
+		if (ev.which !== 'redo') return;
+		redoButton.disabled = !ev.available;
+	});
+
+	undoButton.disabled = !scene.canUndo();
+	redoButton.disabled = !scene.canRedo();
+
 	window.addEventListener("keydown", (ev) => {
 		if (ev.ctrlKey && ev.key === "z") {
 			scene.undo();

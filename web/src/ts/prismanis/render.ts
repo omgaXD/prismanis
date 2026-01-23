@@ -10,11 +10,12 @@ const DEFAULT_FILL_COLOR = "#ffffff88";
 type MousePositionGetter = (ev: MouseEvent) => Vec2;
 
 export type ToolHelper = {
-    mpg: MousePositionGetter;
-    registerMouseUpListener: (listener: (ev: MouseEvent) => void) => void;
-    registerMouseDownListener: (listener: (ev: MouseEvent) => void) => void;
-    registerMouseMoveListener: (listener: (ev: MouseEvent) => void) => void;
-}
+	mpg: MousePositionGetter;
+	registerMouseUpListener: (listener: (ev: MouseEvent) => void) => void;
+	registerMouseDownListener: (listener: (ev: MouseEvent) => void) => void;
+	registerMouseMoveListener: (listener: (ev: MouseEvent) => void) => void;
+	registerMouseLeaveListener: (listener: (ev: MouseEvent) => void) => void;
+};
 
 export class Renderer {
 	ctx: CanvasRenderingContext2D;
@@ -28,15 +29,14 @@ export class Renderer {
 		}
 		this.ctx = context;
 
-        this.canvas.addEventListener("resize", this.adjustCanvasSize.bind(this));
-        this.adjustCanvasSize();
+		this.canvas.addEventListener("resize", this.adjustCanvasSize.bind(this));
+		this.adjustCanvasSize();
 	}
 
-    
-    adjustCanvasSize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight - this.canvas.getBoundingClientRect().top;
-    }
+	adjustCanvasSize() {
+		this.canvas.width = window.innerWidth;
+		this.canvas.height = window.innerHeight - this.canvas.getBoundingClientRect().top;
+	}
 
 	clear() {
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -65,38 +65,41 @@ export class Renderer {
 		}
 	}
 
-    
-    setupRender(scene:Scene, paint: Paint, lightRaycaster: LightRaycaster) {
-        requestAnimationFrame(() => {
-            this.drawScene(scene, paint, lightRaycaster);
-            this.setupRender(scene, paint, lightRaycaster);
-        });
-    }
+	setupRender(scene: Scene, paint: Paint, lightRaycaster: LightRaycaster) {
+		requestAnimationFrame(() => {
+			this.drawScene(scene, paint, lightRaycaster);
+			this.setupRender(scene, paint, lightRaycaster);
+		});
+	}
 
-    mousePositionFactory(): MousePositionGetter {
-        return (ev: MouseEvent) => {
-            const rect = this.canvas.getBoundingClientRect();
-            return {
-                x: ev.clientX - rect.left,
-                y: ev.clientY - rect.top,
-            };
-        };
-    }
+	mousePositionFactory(): MousePositionGetter {
+		return (ev: MouseEvent) => {
+			const rect = this.canvas.getBoundingClientRect();
+			return {
+				x: ev.clientX - rect.left,
+				y: ev.clientY - rect.top,
+			};
+		};
+	}
 
-    getToolHelper(): ToolHelper {
-        return {
-            mpg: this.mousePositionFactory(),
-            registerMouseUpListener: (listener: (ev: MouseEvent) => void) => {
-                this.canvas.addEventListener("mouseup", listener);
-            },
-            registerMouseDownListener: (listener: (ev: MouseEvent) => void) => {
-                this.canvas.addEventListener("mousedown", listener);
-            },
-            registerMouseMoveListener: (listener: (ev: MouseEvent) => void) => {
-                this.canvas.addEventListener("mousemove", listener);
-            },
-        };
-    }
+	getToolHelper(): ToolHelper {
+		return {
+			mpg: this.mousePositionFactory(),
+			registerMouseUpListener: (listener: (ev: MouseEvent) => void) => {
+				this.canvas.addEventListener("mouseup", listener);
+			},
+			registerMouseDownListener: (listener: (ev: MouseEvent) => void) => {
+				this.canvas.addEventListener("mousedown", listener);
+			},
+			registerMouseMoveListener: (listener: (ev: MouseEvent) => void) => {
+				this.canvas.addEventListener("mousemove", listener);
+			},
+			registerMouseLeaveListener: (listener: (ev: MouseEvent) => void) => {
+				this.canvas.addEventListener("pointerleave", listener);
+
+			},
+		};
+	}
 }
 
 function drawRotationHandle(ctx: CanvasRenderingContext2D, obj: Transform) {
@@ -156,8 +159,6 @@ function dottedCanvas(ctx: CanvasRenderingContext2D) {
 		}
 	}
 }
-
-
 
 export function drawCurveObject(ctx: CanvasRenderingContext2D, curveObj: SceneCurveObject) {
 	const curve = curveObj.curve;
