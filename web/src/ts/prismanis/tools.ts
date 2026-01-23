@@ -1,20 +1,17 @@
 import { Scene } from "./scene";
+import { ToolSettingNumber, ToolSettingSelect, ToolSettingSlider } from "./toolSettings";
+import { AbstractTool, registeredTools } from "./tools/tool";
 
-interface Toggleable {
-	toggle(bool: boolean): void;
-}
+const toolDescriptionElem = document.getElementById("tool-description") as HTMLParagraphElement;
+const toolOptionsElem = document.getElementById("tool-options") as HTMLDivElement;
 
-type Tool = {
-	tool: Toggleable;
-	name: string;
-};
-
-export function setupTools(currentScene: Scene, toolStates: Tool[]) {
+export function setupTools(currentScene: Scene) {
 	function adjustTool() {
-		const checkedTool = (document.querySelector('input[name="tool"]:checked') as HTMLInputElement).value;
-		toolStates.forEach(({ tool, name }) => {
-			tool.toggle(`toggle-${name}` === checkedTool);
-		});
+		const checkedInput = (document.querySelector('input[name="tool"]:checked') as HTMLInputElement).value;
+		const checkedTool = registeredTools.find((tool) => `toggle-${tool.id}` === checkedInput);
+		if (checkedTool) {
+			switchToTool(checkedTool);
+		}
 	}
 	adjustTool();
 	const toolInputs = document.querySelectorAll('input[name="tool"]');
@@ -25,6 +22,82 @@ export function setupTools(currentScene: Scene, toolStates: Tool[]) {
 	setupClearButton(currentScene);
 	setupUndoRedoButtons(currentScene);
 	setupDeleteKeyListener(currentScene);
+}
+
+function switchToTool(tool: AbstractTool) {
+	registeredTools.forEach((t) => {
+		t.toggle(t === tool);
+	});
+
+	toolDescriptionElem.textContent = tool.displayDescription;
+	toolOptionsElem.innerHTML = "";
+
+	tool.settings.forEach((setting) => {
+		const optionDiv = document.createElement("div");
+		optionDiv.classList.add("tool-option");
+
+		const label = document.createElement("label");
+		label.classList.add("form-label");
+		label.textContent = setting.displayName;
+		label.htmlFor = `option-${setting.id}`;
+		optionDiv.appendChild(label);
+
+		let input: HTMLElement;
+
+		if (setting instanceof ToolSettingSelect) {
+			const select = document.createElement("select");
+			select.id = `option-${setting.id}`;
+			setting.options.forEach((opt) => {
+				const optionElem = document.createElement("option");
+				optionElem.value = opt.value;
+				optionElem.textContent = opt.displayName;
+				if (opt.value === setting.getValue()) {
+					optionElem.selected = true;
+				}
+				select.appendChild(optionElem);
+			});
+			select.addEventListener("change", () => {
+				setting.setValue(select.value);
+			});
+			input = select;
+		} else if (setting instanceof ToolSettingNumber) {
+			const numberInput = document.createElement("input");
+			numberInput.type = "number";
+			numberInput.id = `option-${setting.id}`;
+			numberInput.value = setting.getValue().toString();
+			numberInput.min = setting.min.toString();
+			numberInput.max = setting.max.toString();
+			numberInput.addEventListener("change", () => {
+				setting.setValue(Number(numberInput.value));
+			});
+			input = numberInput;
+		} else if (setting instanceof ToolSettingSlider) {
+			const sliderInput = document.createElement("input");
+			sliderInput.type = "range";
+			sliderInput.id = `option-${setting.id}`;
+			sliderInput.value = setting.getValue().toString();
+			sliderInput.min = setting.min.toString();
+			sliderInput.max = setting.max.toString();
+			sliderInput.step = setting.step.toString();
+			sliderInput.addEventListener("input", () => {
+				setting.setValue(Number(sliderInput.value));
+			});
+			input = sliderInput;
+
+			const output = document.createElement("output");
+			output.htmlFor = sliderInput.id;
+			output.value = sliderInput.value;
+			sliderInput.addEventListener("input", () => {
+				output.value = sliderInput.value;
+			});
+			optionDiv.appendChild(output);
+		} else {
+			throw new Error(`Unsupported tool option type for option ${setting.id}`);
+		}
+
+		optionDiv.appendChild(input);
+		toolOptionsElem.appendChild(optionDiv);
+	});
 }
 
 function setupClearButton(scene: Scene) {

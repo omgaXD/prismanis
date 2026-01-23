@@ -1,4 +1,8 @@
 @layer base {
+    :root {
+        --sidebar-width: var(--space-72);
+    }
+
     body {
         font-size: var(--text-xl);
         background-color: var(--color-stone-900);
@@ -6,6 +10,7 @@
 
         header {
             background-color: var(--color-stone-800);
+            border-bottom: 1px solid var(--color-stone-700);
         }
     }
 
@@ -13,10 +18,58 @@
         text-decoration: underline;
     }
 
+    h3 {
+        font-size: var(--text-sm);
+        margin-bottom: calc(var(--spacing) * 2);
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .rect {
+        background-color: var(--color-stone-900);
+        border: 1px solid var(--color-stone-700);
+        padding: 0;
+        
+        section {
+            padding: var(--space-1) var(--space-3);
+            &:not(:first-child) {
+                border-top: 1px solid var(--color-stone-700);
+            }
+        }
+    }
+
+    .form-label {
+        font-weight: 600;
+        display: block;
+        font-size: var(--text-xs);
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select {
+        background-color: var(--color-stone-800);
+        border: 1px solid var(--color-stone-600);
+        color: var(--color-stone-200);
+        padding: var(--space-1\/2) var(--space-2);
+        border-radius: var(--radius-md);
+        font-size: var(--text-sm);
+
+        &.input-invalid, &:invalid {
+            border-color: var(--color-red-500);
+            background-color: var(--color-red-900);
+        }
+    }
+
+    input[type="range"] {
+        width: 100%;
+        accent-color: var(--color-blue-400);
+        
+    }
+
     .card {
         background-color: var(--color-stone-800);
         border-radius: var(--radius-lg);
-        padding: calc(var(--spacing) * 4);
+        padding: calc(--space-4);
     }
 
     .default {

@@ -5,6 +5,7 @@ import { getTransformedCurvesFromScene } from "./helpers";
 import { PaintTool } from "./tools/paintTool";
 import { RaycastTool } from "./tools/raycastTool";
 import { TransformTool } from "./tools/transformTool";
+import { registerTool } from "./tools/tool";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
@@ -13,17 +14,19 @@ let currentScene = new Scene();
 if (ctx) {
 	const renderer = new Renderer(canvas);
 
-	const paintTool = new PaintTool({
-		hlp: renderer.getToolHelper(),
-		onCurveClosed: curveAdderFactory(currentScene),
-		closedDistanceThreshold: 40,
-		drawingThreshold: 20,
-	});
-	const raycastTool = new RaycastTool({
+	registerTool(new PaintTool({
+			id: "paint",
+			displayName: "Paint Tool",
+			displayDescription: "Draw freeform closed curves on the canvas.",
+			hlp: renderer.getToolHelper(),
+			onCurveClosed: curveAdderFactory(currentScene),
+		}));
+	registerTool(new RaycastTool({
+		id: "raycast",
+		displayName: "Raycast Tool",
+		displayDescription: "Cast rays from points on closed curves.",
 		hlp: renderer.getToolHelper(),
 		getTransformedCurves: () => getTransformedCurvesFromScene(currentScene),
-		// Approximate solar visible spectral power distribution (blackbody ~5778K),
-		// sampled across the visible band and normalized to the previous peak opacity (0.2).
 		rayConfig: [
 			{ wavelength: 380, opacity: 0.05, initialAngle: 0 },
 			{ wavelength: 420, opacity: 0.12, initialAngle: 0 },
@@ -35,17 +38,17 @@ if (ctx) {
 			{ wavelength: 660, opacity: 0.07, initialAngle: 0 },
 			{ wavelength: 700, opacity: 0.036, initialAngle: 0 },
 			{ wavelength: 740, opacity: 0.01, initialAngle: 0 },
-		],
-	});
-	const transformTool = new TransformTool({
+		]
+	}))
+	registerTool(new TransformTool({
+		id: "transform",
+		displayName: "Transform Tool",
+		displayDescription: "Select, move, rotate, and scale objects.",
 		hlp: renderer.getToolHelper(),
 		scene: currentScene,
-	});
-	renderer.setupRender(currentScene, paintTool, raycastTool);
+	}));
 
-	setupTools(currentScene, [
-		{ tool: paintTool, name: "paint" },
-		{ tool: raycastTool, name: "raycast" },
-		{ tool: transformTool, name: "transform" },
-	]);
+	renderer.setupRender(currentScene);
+
+	setupTools(currentScene);
 }

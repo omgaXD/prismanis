@@ -1,14 +1,14 @@
 import { dist, pointInRect } from "../helpers";
 import { ToolHelper } from "../render";
 import { Scene } from "../scene";
+import { AbstractTool, BaseToolOptions } from "./tool";
 
-export type TransformToolOptions = {
+export type TransformToolOptions = BaseToolOptions & {
 	hlp: ToolHelper;
 	scene: Scene;
 };
 
-export class TransformTool {
-	private enabled: boolean = false;
+export class TransformTool extends AbstractTool {
 	private dragging: boolean = false;
 	private rotating: boolean = false;
 	private lastMousePos: { x: number; y: number } = { x: 0, y: 0 };
@@ -18,14 +18,14 @@ export class TransformTool {
 	private recentlySelectedIds: Set<string> = new Set();
 	private transformActionIndex: number | null = null;
 
-	toggle(enabled: boolean) {
-		this.enabled = enabled;
-		if (!this.enabled) {
+	onToggled(enabled: boolean) {
+		if (!enabled) {
 			this.o.scene.deselect();
 		}
 	}
 
 	constructor(private o: TransformToolOptions) {
+		super(o);
 		this.init();
 	}
 
@@ -64,7 +64,7 @@ export class TransformTool {
 	}
 
 	onMouseDown(event: MouseEvent) {
-		if (!this.enabled) return;
+		if (!this.isEnabled()) return;
 		// Find first object being touched
 		const shiftKey = event.shiftKey;
 
@@ -101,7 +101,7 @@ export class TransformTool {
 	}
 
 	onMouseUp(event: MouseEvent) {
-		if (!this.enabled) return;
+		if (!this.isEnabled()) return;
 		if (this.dragging) {
 			if (this.transformActionIndex !== null) {
 				this.o.scene.endTransform(this.transformActionIndex);
@@ -182,7 +182,7 @@ export class TransformTool {
 	}
 
 	onMouseMove(event: MouseEvent) {
-		if (!this.enabled) return;
+		if (!this.isEnabled()) return;
 		if (!this.o.scene.selectedObjectIds.length) return;
 		if (this.dragging) this.drag(event);
 		else if (this.rotating) this.rotate(event);

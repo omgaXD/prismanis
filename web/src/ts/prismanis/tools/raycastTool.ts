@@ -3,6 +3,7 @@ import { dist as distance, normalizeVec2, rotateVec, TransformedCurve } from "..
 import { AIR_MATERIAL } from "../material";
 import { Curve, Vec2 } from "../primitives";
 import { ToolHelper } from "../render";
+import { AbstractTool, BaseToolOptions } from "./tool";
 
 export type RayOptions = {
 	/**
@@ -19,12 +20,9 @@ export type RayOptions = {
 	initialAngle: number;
 }
 
-export type RaycastToolOptions = {
+export type RaycastToolOptions = BaseToolOptions & {
 	getTransformedCurves: () => TransformedCurve[];
 	hlp: ToolHelper;
-	/**
-	 * radians from the right (0 rad) going counter-clockwise
-	 */
 	rayConfig: RayOptions[];
 };
 
@@ -33,33 +31,33 @@ export type RaycastRay = Curve & {
 	opacity: number;
 };
 
-export class RaycastTool {
-	enabled: boolean = true;
+export class RaycastTool extends AbstractTool {
 	rays: RaycastRay[] = [];
 	fixedAt: Vec2 | null = null;
 	transformedCurves: TransformedCurve[] = [];
 
 	constructor(private o: RaycastToolOptions) {
+		super(o);
 		this.init();
 	}
 
 	init() {
 		this.o.hlp.registerMouseDownListener((ev) => {
-			if (!this.enabled) {
+			if (!this.isEnabled()) {
 				return;
 			}
 			this.fixedAt = this.o.hlp.mpg(ev);
 		});
 
 		this.o.hlp.registerMouseUpListener(() => {
-			if (!this.enabled) {
+			if (!this.isEnabled()) {
 				return;
 			}
 			this.fixedAt = null;
 		});
 
 		this.o.hlp.registerMouseMoveListener((ev) => {
-			if (!this.enabled) {
+			if (!this.isEnabled()) {
 				return;
 			}
 			const mouse = this.o.hlp.mpg(ev);
@@ -90,16 +88,15 @@ export class RaycastTool {
 		});
 
 		this.o.hlp.registerMouseLeaveListener(() => {
-			if (!this.enabled) {
+			if (!this.isEnabled()) {
 				return;
 			}
 			this.rays.length = 0;
 		});
 	}
 
-	toggle(enabled: boolean) {
-		this.enabled = enabled;
-		if (!this.enabled) {
+	onToggled(enabled: boolean) {
+		if (!enabled) {
 			this.rays = [];
 		}
 	}

@@ -3,6 +3,7 @@ import { PaintTool } from "./tools/paintTool";
 import { Curve, Vec2 } from "./primitives";
 import { Scene, SceneCurveObject, Transform } from "./scene";
 import { wavelengthToRGB } from "./helpers";
+import { registeredTools } from "./tools/tool";
 
 const DEFAULT_THICKNESS = 8;
 const DEFAULT_STROKE_COLOR = "#ffffff";
@@ -35,7 +36,8 @@ export class Renderer {
 	}
 
 	adjustCanvasSize() {
-		this.canvas.width = window.innerWidth;
+		this.canvas.width = 1;
+		this.canvas.width = this.canvas.parentElement!.getBoundingClientRect().width;
 		this.canvas.height = window.innerHeight - this.canvas.getBoundingClientRect().top;
 	}
 
@@ -67,10 +69,15 @@ export class Renderer {
 		}
 	}
 
-	setupRender(scene: Scene, paint: PaintTool, lightRaycaster: RaycastTool) {
+	setupRender(scene: Scene) {
+		const paint = registeredTools.find(t => t instanceof PaintTool);
+		const lightRaycaster = registeredTools.find(t => t instanceof RaycastTool);
+		if (!(paint instanceof PaintTool) || !(lightRaycaster instanceof RaycastTool)) {
+			throw new Error("PaintTool or RaycastTool not registered");
+		}
 		requestAnimationFrame(() => {
 			this.drawScene(scene, paint, lightRaycaster);
-			this.setupRender(scene, paint, lightRaycaster);
+			this.setupRender(scene);
 		});
 	}
 

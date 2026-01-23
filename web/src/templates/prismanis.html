@@ -1,28 +1,41 @@
 {{ define "content" }}
-<div class="relative">
-    <canvas id="canvas"></canvas>
-    <div class="toolbox absolute top-2 left-2 flex flex-col gap-2">
-        <label class="icon-btn default">
-            <i class="las la-mouse-pointer"></i>
-            <input type="radio" value="toggle-transform" name="tool" class="sr-only" />
-        </label>
-        <label class="icon-btn default">
-            <i class="las la-paint-brush"></i>
-            <input type="radio" value="toggle-paint" name="tool" class="sr-only" checked />
-        </label>
-        <label class="icon-btn warning">
-            <i class="las la-lightbulb"></i>
-            <input type="radio" value="toggle-raycast" name="tool" class="sr-only" />
-        </label>
-        <button class="icon-btn danger" id="clear-btn">
-            <i class="las la-trash"></i>
-        </button>
-        <button class="icon-btn default" id="undo-btn">
-            <i class="las la-undo"></i>
-        </button>
-        <button class="icon-btn default" id="redo-btn">
-            <i class="las la-redo"></i>
-        </button>
-    </div>
+<div class="relative grid grid-cols-[auto_1fr] h-full">
+	<aside class="relative sidebar rect border-t-0 border-l-0 border-b-0 h-full flex flex-col w-[var(--sidebar-width)]">
+		<section>
+			<h3>Tool options</h3>
+			<!-- JS populated -->
+			<p id="tool-description" class="text-sm"></p>
+			<div id="tool-options" class="flex flex-col gap-3 mt-3"></div>
+		</section>
+		<section class="flex-1">
+			<h3>Scene objects</h3>
+			<!-- JS populated -->
+			<div id="scene-objects"></div>
+		</section>
+		<div class="toolbox absolute top-2 -right-2 translate-x-full flex flex-col gap-2">
+			<label class="icon-btn default">
+				<i class="las la-mouse-pointer"></i>
+				<input type="radio" value="toggle-transform" name="tool" class="sr-only" />
+			</label>
+			<label class="icon-btn default">
+				<i class="las la-paint-brush"></i>
+				<input type="radio" value="toggle-paint" name="tool" class="sr-only" checked />
+			</label>
+			<label class="icon-btn warning">
+				<i class="las la-lightbulb"></i>
+				<input type="radio" value="toggle-raycast" name="tool" class="sr-only" />
+			</label>
+			<button class="icon-btn danger" id="clear-btn">
+				<i class="las la-trash"></i>
+			</button>
+			<button class="icon-btn default" id="undo-btn">
+				<i class="las la-undo"></i>
+			</button>
+			<button class="icon-btn default" id="redo-btn">
+				<i class="las la-redo"></i>
+			</button>
+		</div>
+	</aside>
+	<div class="flex-1 h-full"><canvas id="canvas"></canvas></div>
 </div>
 {{ end }}

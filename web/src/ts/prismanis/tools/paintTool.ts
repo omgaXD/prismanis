@@ -1,20 +1,21 @@
 import { dist } from "../helpers";
 import { Curve } from "../primitives";
 import { ToolHelper } from "../render";
+import { ToolSettingNumber, ToolSettingSlider } from "../toolSettings";
+import { AbstractTool, BaseToolOptions } from "./tool";
 
-export type PaintToolOptions = {
-	closedDistanceThreshold: number;
-	drawingThreshold: number;
+export type PaintToolOptions = BaseToolOptions & {
 	hlp: ToolHelper;
 	onCurveClosed?: (curve: Curve) => void;
 };
 
-export class PaintTool {
+export class PaintTool extends AbstractTool {
 	cur: Curve | null = null;
-
-	enabled: boolean = true;
+	closedDistanceThreshold: number | null = null;
+	drawingThreshold: number | null = null;
 
 	constructor(private o: PaintToolOptions) {
+		super(o);
 		this.init();
 	}
 
@@ -28,7 +29,7 @@ export class PaintTool {
 			this.addPoint(ev);
 
 			if (this.cur.points.length > 2) {
-				recognizeCurveClosedness(this.cur, this.o.closedDistanceThreshold);
+				recognizeCurveClosedness(this.cur, this.closedDistanceThreshold!);
 			}
 
 			if (this.cur.isClosed) {
@@ -37,29 +38,53 @@ export class PaintTool {
 
 			this.cur = null;
 		});
+		// this.registerSetting(new ToolSettingNumber({
+		// 	id: "paint-closed-threshold",
+		// 	displayName: "Closed Distance Threshold",
+		// 	default: 15,
+		// 	value: 15,
+		// 	min: 1,
+		// 	max: 300
+		// }), (newVal) => {
+		// 	this.closedDistanceThreshold = newVal;
+		// })
+		this.closedDistanceThreshold = 30;
+
+		this.registerSetting(
+			new ToolSettingSlider({
+				id: "paint-drawing-threshold",
+				displayName: "Drawing Optimization",
+				default: 20,
+				value: 20,
+				min: 1,
+				max: 100,
+				step: 1,
+			}),
+			(newVal) => {
+				this.drawingThreshold = newVal;
+			},
+		);
 	}
 
 	clear() {
 		this.cur = null;
 	}
 
-	toggle(enabled: boolean) {
-		this.enabled = enabled;
-
-		if (!this.enabled) {
+	onToggled(enabled: boolean) {
+		if (!enabled) {
 			this.cur = null;
 		}
 	}
 
 	startPath(event: MouseEvent) {
-		if (!this.enabled) return;
+		if (!this.isEnabled()) return;
 
 		this.cur = { points: [], isClosed: false };
 		this.addPoint(event);
 	}
 
 	addPoint(event: MouseEvent) {
-		if (!this.enabled) return;
+		if (!this.isEnabled()) return;
 		if (!this.cur) return;
 		const point = this.o.hlp.mpg(event);
 		if (this.cur.points.length === 0) {
@@ -70,9 +95,9 @@ export class PaintTool {
 		const lastPoint = this.cur.points[this.cur.points.length - 1];
 		const distance = dist(lastPoint, point);
 
-		if (distance > this.o.drawingThreshold) {
+		if (distance > this.drawingThreshold!) {
 			// Interpolate points between lastPoint and point
-			const numSegments = Math.ceil(distance / this.o.drawingThreshold);
+			const numSegments = Math.ceil(distance / this.drawingThreshold!);
 			for (let i = 1; i <= numSegments; i++) {
 				const t = i / numSegments;
 				const interpolated = {
