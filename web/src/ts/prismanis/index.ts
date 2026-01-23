@@ -18,21 +18,22 @@ if (ctx) {
 	registerTool(new PaintTool({
 			id: "paint",
 			displayName: "Paint Tool",
-			displayDescription: "Draw freeform closed curves on the canvas.",
+			displayDescription: "Draw freeform closed curves. Open curves will dissapear.",
 			hlp: renderer.getToolHelper(),
 			onCurveClosed: curveAdderFactory(currentScene),
 		}));
 	registerTool(new RaycastTool({
 		id: "raycast",
 		displayName: "Raycast Tool",
-		displayDescription: "Cast rays from points on closed curves.",
+		displayDescription: "Cast rays. Hold left click to fix the ray origin.",
 		hlp: renderer.getToolHelper(),
-		getTransformedCurves: () => getTransformedCurvesFromScene(currentScene)
+		getTransformedCurves: () => getTransformedCurvesFromScene(currentScene),
+		scene: currentScene,
 	}))
 	const transformTool = registerTool(new TransformTool({
 		id: "transform",
 		displayName: "Transform Tool",
-		displayDescription: "Select, move, rotate, and scale objects.",
+		displayDescription: "Select, move and rotate objects.",
 		hlp: renderer.getToolHelper(),
 		scene: currentScene,
 		preservesSelection: true,

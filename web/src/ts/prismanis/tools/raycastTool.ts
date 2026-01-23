@@ -1,8 +1,8 @@
-
 import { dist as distance, normalizeVec2, rotateVec, TransformedCurve } from "../helpers";
 import { AIR_MATERIAL } from "../material";
 import { Curve, Vec2 } from "../primitives";
 import { ToolHelper } from "../render";
+import { Scene } from "../scene";
 import { ToolSettingSelect } from "../toolSettings";
 import { AbstractTool, BaseToolOptions } from "./tool";
 
@@ -19,29 +19,28 @@ export type RayOptions = {
 	 * radians. 0 for right. counter-clockwise.
 	 */
 	initialAngle: number;
-}
+};
 
 export type RaycastToolOptions = BaseToolOptions & {
 	getTransformedCurves: () => TransformedCurve[];
 	hlp: ToolHelper;
+	scene: Scene;
 };
 
 const SUNLIGHT_RAY_CONFIG = [
-			{ wavelength: 380, opacity: 0.05, initialAngle: 0 },
-			{ wavelength: 420, opacity: 0.12, initialAngle: 0 },
-			{ wavelength: 460, opacity: 0.18, initialAngle: 0 },
-			{ wavelength: 500, opacity: 0.2, initialAngle: 0 },
-			{ wavelength: 540, opacity: 0.196, initialAngle: 0 },
-			{ wavelength: 580, opacity: 0.17, initialAngle: 0 },
-			{ wavelength: 620, opacity: 0.12, initialAngle: 0 },
-			{ wavelength: 660, opacity: 0.07, initialAngle: 0 },
-			{ wavelength: 700, opacity: 0.036, initialAngle: 0 },
-			{ wavelength: 740, opacity: 0.01, initialAngle: 0 },
-		];
-
-const LASER_RAY_CONFIG = [
-	{ wavelength: 700, opacity: 1.0, initialAngle: 0 },
+	{ wavelength: 380, opacity: 0.05, initialAngle: 0 },
+	{ wavelength: 420, opacity: 0.12, initialAngle: 0 },
+	{ wavelength: 460, opacity: 0.18, initialAngle: 0 },
+	{ wavelength: 500, opacity: 0.2, initialAngle: 0 },
+	{ wavelength: 540, opacity: 0.196, initialAngle: 0 },
+	{ wavelength: 580, opacity: 0.17, initialAngle: 0 },
+	{ wavelength: 620, opacity: 0.12, initialAngle: 0 },
+	{ wavelength: 660, opacity: 0.07, initialAngle: 0 },
+	{ wavelength: 700, opacity: 0.036, initialAngle: 0 },
+	{ wavelength: 740, opacity: 0.01, initialAngle: 0 },
 ];
+
+const LASER_RAY_CONFIG = [{ wavelength: 700, opacity: 1.0, initialAngle: 0 }];
 
 const FLASHLIGHT_RAY_CONFIG = Array.from({ length: 21 }, (_, i) => {
 	// +1 degree to -1 degree spread
@@ -49,17 +48,17 @@ const FLASHLIGHT_RAY_CONFIG = Array.from({ length: 21 }, (_, i) => {
 	return { wavelength: 600, opacity: 0.05, initialAngle: angle };
 });
 
-const LAMP_RAY_CONFIG = Array.from({ length: 90 }, (_, i) => {
-	const angle = i * 4 * (Math.PI / 180);
+const LAMP_RAY_CONFIG = Array.from({ length: 180 }, (_, i) => {
+	const angle = i * 2 * (Math.PI / 180);
 	return { wavelength: 600, opacity: 0.04, initialAngle: angle };
 });
 
 const configs = {
-	'sunlight': SUNLIGHT_RAY_CONFIG,
-	'laser': LASER_RAY_CONFIG,
-	'flaslight': FLASHLIGHT_RAY_CONFIG,
-	'lamp': LAMP_RAY_CONFIG,
-}
+	sunlight: SUNLIGHT_RAY_CONFIG,
+	laser: LASER_RAY_CONFIG,
+	flaslight: FLASHLIGHT_RAY_CONFIG,
+	lamp: LAMP_RAY_CONFIG,
+};
 
 export type RaycastRay = Curve & {
 	wavelength: number;
@@ -112,7 +111,7 @@ export class RaycastTool extends AbstractTool {
 			this.transformedCurves = this.o.getTransformedCurves();
 
 			this.rays = [];
-			
+
 			for (const o of this.rayConfig) {
 				const dir = {
 					x: rotateVec(mainDir, o.initialAngle).x,
@@ -130,23 +129,26 @@ export class RaycastTool extends AbstractTool {
 			this.rays.length = 0;
 		});
 
-		this.registerSetting(new ToolSettingSelect({
-			id: "raycast-type",
-			displayName: "Raycast Type",
-			options: [
-				{ value: "sunlight", displayName: "Sunlight" },
-				{ value: "laser", displayName: "Simple Laser" },
-				{ value: "flaslight", displayName: "Flashlight" },
-				{value: "lamp", displayName: "Lamp" },
-			],
-			default: "sunlight",
-			value: "sunlight",
-		}), (newValue) => {
-			if (!(newValue in configs)) {
-				throw new Error(`Unsupported raycast type: ${newValue}`);
-			}
-			this.rayConfig = configs[newValue as keyof typeof configs];
-		})
+		this.registerSetting(
+			new ToolSettingSelect({
+				id: "raycast-type",
+				displayName: "Raycast Type",
+				options: [
+					{ value: "sunlight", displayName: "Sunlight" },
+					{ value: "laser", displayName: "Simple Laser" },
+					{ value: "flaslight", displayName: "Flashlight" },
+					{ value: "lamp", displayName: "Lamp" },
+				],
+				default: "sunlight",
+				value: "sunlight",
+			}),
+			(newValue) => {
+				if (!(newValue in configs)) {
+					throw new Error(`Unsupported raycast type: ${newValue}`);
+				}
+				this.rayConfig = configs[newValue as keyof typeof configs];
+			},
+		);
 	}
 
 	onToggled(enabled: boolean) {
@@ -165,14 +167,17 @@ export class RaycastTool extends AbstractTool {
 		for (let i = 0; i < maxLength; i += step) {
 			points.push(at);
 			at = { x: at.x + dir.x * step, y: at.y + dir.y * step };
+			if (!this.o.scene.isPointInbounds(at)) {
+				break;
+			}
 			const newMedium = this.getMediumAt(at, o.wavelength);
 			if (newMedium !== curMedium) {
 				const normalCurve = this.findClosestCurve(at);
 				if (normalCurve) {
-					let normal = this.findReasonableNormal(at, normalCurve);
+					let normal = this.findReasonableNormal(at, normalCurve.curve, normalCurve.closestPointIndex);
 
 					const n1 = curMedium;
-					const n2 = newMedium
+					const n2 = newMedium;
 
 					// Ensure normal points against the ray (towards the incident medium)
 					const dotProduct = normal.x * dir.x + normal.y * dir.y;
@@ -200,7 +205,6 @@ export class RaycastTool extends AbstractTool {
 						};
 						curMedium = n2;
 					}
-					dir = normalizeVec2(dir);
 				} else {
 					// Fallback if no curve found (shouldn't happen if medium changed)
 					console.warn("No curve found for medium change at", at);
@@ -212,40 +216,47 @@ export class RaycastTool extends AbstractTool {
 		return { points, isClosed: false, wavelength: o.wavelength, opacity: o.opacity };
 	}
 
-	private findClosestCurve(point: Vec2): Curve | null {
+	private findClosestCurve(point: Vec2): { curve: Curve; closestPointIndex: number } | null {
 		let closestCurve: Curve | null = null;
+		let closestPointIndex = -1;
 		let minDistance = Infinity;
 		for (const curve of this.transformedCurves) {
+			for (let i = 0; i < curve.points.length; i++) {
+				const dist = distance(point, curve.points[i]);
+				if (dist < minDistance) {
+					minDistance = dist;
+					closestCurve = curve;
+					closestPointIndex = i;
+				}
+			}
+		}
+		if (closestCurve === null) {
+			return null;
+		}
+		return { curve: closestCurve, closestPointIndex };
+	}
+
+	private findReasonableNormal(point: Vec2, curve: Curve, indexOnCurve?: number): Vec2 {
+		if (!indexOnCurve) {
+			// Find the closest Vec2 on the curve to the given Vec2
+			let closestVec2: Vec2 | null = null;
+			let minDistance = Infinity;
 			for (const p of curve.points) {
 				const dist = distance(point, p);
 				if (dist < minDistance) {
 					minDistance = dist;
-					closestCurve = curve;
+					closestVec2 = p;
 				}
 			}
-		}
-		return closestCurve;
-	}
-
-	private findReasonableNormal(point: Vec2, curve: Curve): Vec2 {
-		// Find the closest Vec2 on the curve to the given Vec2
-		let closestVec2: Vec2 | null = null;
-		let minDistance = Infinity;
-		for (const p of curve.points) {
-			const dist = distance(point, p);
-			if (dist < minDistance) {
-				minDistance = dist;
-				closestVec2 = p;
+			if (!closestVec2) {
+				return { x: 0, y: 0 };
 			}
-		}
-		if (!closestVec2) {
-			return { x: 0, y: 0 };
+			indexOnCurve = curve.points.indexOf(closestVec2);
 		}
 
 		// Approximate tangent by looking at neighboring points
-		const index = curve.points.indexOf(closestVec2);
-		const prevIndex = (index - 1 + curve.points.length) % curve.points.length;
-		const nextIndex = (index + 1) % curve.points.length;
+		const prevIndex = (indexOnCurve - 1 + curve.points.length) % curve.points.length;
+		const nextIndex = (indexOnCurve + 1) % curve.points.length;
 
 		const tangent = {
 			x: curve.points[nextIndex].x - curve.points[prevIndex].x,
@@ -257,20 +268,20 @@ export class RaycastTool extends AbstractTool {
 	}
 
 	private getMediumAt(point: Vec2, forWavelength: number): number {
+		const wavelengthSq = forWavelength * forWavelength;
 		let n = 0;
 		let anyCurves = false;
 		for (const curve of this.transformedCurves) {
 			if (this.isVec2InCurve(point, curve)) {
-				n += curve.material.A + curve.material.B / (forWavelength * forWavelength);
+				n += curve.material.A + curve.material.B / wavelengthSq;
 				anyCurves = true;
 			}
 		}
 		if (!anyCurves) {
-			return AIR_MATERIAL.A + AIR_MATERIAL.B / (forWavelength * forWavelength);
+			return AIR_MATERIAL.A + AIR_MATERIAL.B / wavelengthSq;
 		}
 		return n;
 	}
-
 
 	private isVec2InCurve(point: Vec2, curve: Curve): boolean {
 		// Ray-casting algorithm to determine if Vec2 is in polygon

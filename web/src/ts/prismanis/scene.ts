@@ -145,6 +145,12 @@ export class Scene {
 		this.remove(this.objects);
 	}
 
+	isPointInbounds(point: Vec2): boolean {
+		if (point.x < 0 || point.y < 0) return false;
+		if (point.x > 1920 || point.y > 1080) return false;
+		return true;
+	}
+
 	startTransform(on: string[]): number {
 		this.pushAction({
 			type: "transform",
