@@ -9,7 +9,19 @@ type HistoryAvailabilityChangedEvent = BaseEvent & {
 	available: boolean;
 };
 
-export type SceneEvent = HistoryAvailabilityChangedEvent;
+type SceneObjectEvent = BaseEvent & {
+	type: "scene-object-changed";
+	addedObjectIds: string[];
+	removedObjectIds: string[];
+	selectedObjectIds: string[];
+};
+
+export type SceneEvent = HistoryAvailabilityChangedEvent | SceneObjectEvent;
+
+type EventMap = {
+	"history-availability-changed": HistoryAvailabilityChangedEvent;
+	"scene-object-changed": SceneObjectEvent;
+};
 
 export class Scene {
 	private objects: SceneObject[];
@@ -18,23 +30,42 @@ export class Scene {
 	future: SceneAction[] = [];
 	historyMutationInProgress: boolean = false;
 	private historyAvailabilityChangedListeners: ((event: HistoryAvailabilityChangedEvent) => void)[] = [];
+	private sceneObjectChangedListeners: ((event: SceneObjectEvent) => void)[] = [];
 
 	constructor() {
 		this.objects = [];
 		this.selectedObjectIds = [];
 	}
 
-	addListener<T extends SceneEvent>(type: T["type"], listener: (event: T) => void) {
+	addListener<K extends keyof EventMap>(type: K, listener: (event: EventMap[K]) => void) {
 		if (type === "history-availability-changed") {
 			this.historyAvailabilityChangedListeners.push(listener as (event: HistoryAvailabilityChangedEvent) => void);
+		} else if (type === "scene-object-changed") {
+			this.sceneObjectChangedListeners.push(listener as (event: SceneObjectEvent) => void);
 		}
 	}
 
-	removeListener<T extends SceneEvent>(type: T["type"], listener: (event: T) => void) {
+	removeListener<K extends keyof EventMap>(type: K, listener: (event: EventMap[K]) => void) {
 		if (type === "history-availability-changed") {
 			this.historyAvailabilityChangedListeners = this.historyAvailabilityChangedListeners.filter(
 				(l) => l !== (listener as (event: HistoryAvailabilityChangedEvent) => void),
 			);
+		} else if (type === "scene-object-changed") {
+			this.sceneObjectChangedListeners = this.sceneObjectChangedListeners.filter(
+				(l) => l !== (listener as (event: SceneObjectEvent) => void),
+			);
+		}
+	}
+
+	private notifySceneObjectChanged(addedObjectIds: string[], removedObjectIds: string[]) {
+		const event: SceneObjectEvent = {
+			type: "scene-object-changed",
+			addedObjectIds,
+			removedObjectIds,
+			selectedObjectIds: [...this.selectedObjectIds],
+		};
+		for (const listener of this.sceneObjectChangedListeners) {
+			listener(event);
 		}
 	}
 
@@ -81,6 +112,7 @@ export class Scene {
 
 		this.selectedObjectIds.length = 0;
 		this.selectedObjectIds.push(objectId);
+		this.notifySceneObjectChanged([], []);
 	}
 
 	isObjectSelected(objectId: string): boolean {
@@ -92,11 +124,20 @@ export class Scene {
 
 		if (!this.isObjectSelected(objectId)) {
 			this.selectedObjectIds.push(objectId);
+			this.notifySceneObjectChanged([], []);
 		}
+	}
+
+	removeFromSelection(objectId: string) {
+		this.ensureObjectExists(objectId);
+
+		this.selectedObjectIds = this.selectedObjectIds.filter((id) => id !== objectId);
+		this.notifySceneObjectChanged([], []);
 	}
 
 	deselect() {
 		this.selectedObjectIds.length = 0;
+		this.notifySceneObjectChanged([], []);
 	}
 
 	clear() {
@@ -148,6 +189,7 @@ export class Scene {
 			type: "add",
 			object: object,
 		});
+		this.notifySceneObjectChanged([object.id], []);
 	}
 
 	remove(objects: SceneObject[] | string[] | SceneObject | string) {
@@ -172,6 +214,10 @@ export class Scene {
 			type: "remove",
 			objects: objsToRemove,
 		});
+		this.notifySceneObjectChanged(
+			[],
+			objsToRemove.map((o) => o.id),
+		);
 	}
 
 	undo() {
@@ -274,7 +320,7 @@ export function curveAdderFactory(scene: Scene) {
 			type: "curve",
 			curve: curve,
 			transform: transform,
-			material: EXAGGERATED_GLASS_MATERIAL
+			material: EXAGGERATED_GLASS_MATERIAL,
 		};
 
 		scene.add(sceneObject);

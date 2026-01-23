@@ -10,7 +10,7 @@ export function setupTools(currentScene: Scene) {
 		const checkedInput = (document.querySelector('input[name="tool"]:checked') as HTMLInputElement).value;
 		const checkedTool = registeredTools.find((tool) => `toggle-${tool.id}` === checkedInput);
 		if (checkedTool) {
-			switchToTool(checkedTool);
+			switchToTool(checkedTool, currentScene);
 		}
 	}
 	adjustTool();
@@ -24,10 +24,19 @@ export function setupTools(currentScene: Scene) {
 	setupDeleteKeyListener(currentScene);
 }
 
-function switchToTool(tool: AbstractTool) {
+export function switchToTool(tool: AbstractTool, currentScene: Scene) {
 	registeredTools.forEach((t) => {
 		t.toggle(t === tool);
 	});
+
+	if (tool.preservesSelection === false) {
+		currentScene.deselect();
+	}
+
+	// just in case, also set radio button
+	const toolRadioInputs = document.querySelector(`input[name="tool"][value="toggle-${tool.id}"]`) as HTMLInputElement;
+	toolRadioInputs.checked = true;
+	
 
 	toolDescriptionElem.textContent = tool.displayDescription;
 	toolOptionsElem.innerHTML = "";

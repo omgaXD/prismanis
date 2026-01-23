@@ -72,6 +72,10 @@
         padding: calc(--space-4);
     }
 
+    .selected, .selectable:has(:checked) {
+        background-color: var(--color-blue-700);
+    }
+
     .default {
         background-color: var(--color-stone-800);
         border: 1px solid var(--color-stone-600);

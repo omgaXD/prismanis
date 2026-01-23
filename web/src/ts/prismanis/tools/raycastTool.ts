@@ -3,6 +3,7 @@ import { dist as distance, normalizeVec2, rotateVec, TransformedCurve } from "..
 import { AIR_MATERIAL } from "../material";
 import { Curve, Vec2 } from "../primitives";
 import { ToolHelper } from "../render";
+import { ToolSettingSelect } from "../toolSettings";
 import { AbstractTool, BaseToolOptions } from "./tool";
 
 export type RayOptions = {
@@ -23,8 +24,42 @@ export type RayOptions = {
 export type RaycastToolOptions = BaseToolOptions & {
 	getTransformedCurves: () => TransformedCurve[];
 	hlp: ToolHelper;
-	rayConfig: RayOptions[];
 };
+
+const SUNLIGHT_RAY_CONFIG = [
+			{ wavelength: 380, opacity: 0.05, initialAngle: 0 },
+			{ wavelength: 420, opacity: 0.12, initialAngle: 0 },
+			{ wavelength: 460, opacity: 0.18, initialAngle: 0 },
+			{ wavelength: 500, opacity: 0.2, initialAngle: 0 },
+			{ wavelength: 540, opacity: 0.196, initialAngle: 0 },
+			{ wavelength: 580, opacity: 0.17, initialAngle: 0 },
+			{ wavelength: 620, opacity: 0.12, initialAngle: 0 },
+			{ wavelength: 660, opacity: 0.07, initialAngle: 0 },
+			{ wavelength: 700, opacity: 0.036, initialAngle: 0 },
+			{ wavelength: 740, opacity: 0.01, initialAngle: 0 },
+		];
+
+const LASER_RAY_CONFIG = [
+	{ wavelength: 700, opacity: 1.0, initialAngle: 0 },
+];
+
+const FLASHLIGHT_RAY_CONFIG = Array.from({ length: 21 }, (_, i) => {
+	// +1 degree to -1 degree spread
+	const angle = ((i / 20) * 2 - 1) * (Math.PI / 180);
+	return { wavelength: 600, opacity: 0.05, initialAngle: angle };
+});
+
+const LAMP_RAY_CONFIG = Array.from({ length: 90 }, (_, i) => {
+	const angle = i * 4 * (Math.PI / 180);
+	return { wavelength: 600, opacity: 0.04, initialAngle: angle };
+});
+
+const configs = {
+	'sunlight': SUNLIGHT_RAY_CONFIG,
+	'laser': LASER_RAY_CONFIG,
+	'flaslight': FLASHLIGHT_RAY_CONFIG,
+	'lamp': LAMP_RAY_CONFIG,
+}
 
 export type RaycastRay = Curve & {
 	wavelength: number;
@@ -35,6 +70,7 @@ export class RaycastTool extends AbstractTool {
 	rays: RaycastRay[] = [];
 	fixedAt: Vec2 | null = null;
 	transformedCurves: TransformedCurve[] = [];
+	rayConfig: RayOptions[] = [];
 
 	constructor(private o: RaycastToolOptions) {
 		super(o);
@@ -77,7 +113,7 @@ export class RaycastTool extends AbstractTool {
 
 			this.rays = [];
 			
-			for (const o of this.o.rayConfig) {
+			for (const o of this.rayConfig) {
 				const dir = {
 					x: rotateVec(mainDir, o.initialAngle).x,
 					y: rotateVec(mainDir, o.initialAngle).y,
@@ -93,6 +129,24 @@ export class RaycastTool extends AbstractTool {
 			}
 			this.rays.length = 0;
 		});
+
+		this.registerSetting(new ToolSettingSelect({
+			id: "raycast-type",
+			displayName: "Raycast Type",
+			options: [
+				{ value: "sunlight", displayName: "Sunlight" },
+				{ value: "laser", displayName: "Simple Laser" },
+				{ value: "flaslight", displayName: "Flashlight" },
+				{value: "lamp", displayName: "Lamp" },
+			],
+			default: "sunlight",
+			value: "sunlight",
+		}), (newValue) => {
+			if (!(newValue in configs)) {
+				throw new Error(`Unsupported raycast type: ${newValue}`);
+			}
+			this.rayConfig = configs[newValue as keyof typeof configs];
+		})
 	}
 
 	onToggled(enabled: boolean) {

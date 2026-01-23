@@ -4,6 +4,7 @@ export type BaseToolOptions = {
 	id: string;
 	displayName: string;
 	displayDescription: string;
+	preservesSelection?: boolean;
 };
 
 export class AbstractTool {
@@ -12,11 +13,13 @@ export class AbstractTool {
 	id: string;
 	displayName: string;
 	displayDescription: string;
+	preservesSelection: boolean = false;
 
-	constructor(config: { id: string; displayName: string; displayDescription: string }) {
+	constructor(config: BaseToolOptions) {
 		this.id = config.id;
 		this.displayName = config.displayName;
 		this.displayDescription = config.displayDescription;
+		this.preservesSelection = config.preservesSelection ?? false;
 	}
 
 	protected isEnabled(): boolean {
