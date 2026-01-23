@@ -29,7 +29,7 @@ export class Renderer {
 		}
 		this.ctx = context;
 
-		this.canvas.addEventListener("resize", this.adjustCanvasSize.bind(this));
+		window.addEventListener("resize", this.adjustCanvasSize.bind(this));
 		this.adjustCanvasSize();
 	}
 
