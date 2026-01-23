@@ -1,10 +1,11 @@
 import { Curve } from "./painting";
 import { dist as distance, rotateVec } from "./helpers";
 import { Vec2 } from "./primitives";
+import { ToolHelper } from "./render";
 
 export type LightRaycasterOptions = {
 	getTransformedCurves: () => Curve[];
-	canvas: HTMLCanvasElement;
+	hlp: ToolHelper;
 	/**
 	 * radians from the right (0 rad) going counter-clockwise
 	 */
@@ -26,28 +27,25 @@ export class LightRaycaster {
 	constructor(private o: LightRaycasterOptions) {}
 
 	init() {
-		this.o.canvas.addEventListener("mousedown", (ev) => {
+		this.o.hlp.registerMouseDownListener((ev) => {
 			if (!this.enabled) {
 				return;
 			}
-			const rect = this.o.canvas.getBoundingClientRect();
-			const at: Vec2 = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
-			this.fixedAt = at;
+			this.fixedAt = this.o.hlp.mpg(ev);
 		});
 
-		this.o.canvas.addEventListener("mouseup", () => {
+		this.o.hlp.registerMouseUpListener(() => {
 			if (!this.enabled) {
 				return;
 			}
 			this.fixedAt = null;
 		});
 
-		this.o.canvas.addEventListener("mousemove", (ev) => {
+		this.o.hlp.registerMouseMoveListener((ev) => {
 			if (!this.enabled) {
 				return;
 			}
-			const rect = this.o.canvas.getBoundingClientRect();
-			const mouse: Vec2 = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+			const mouse = this.o.hlp.mpg(ev);
 			let at: Vec2;
 			let mainDir: Vec2;
 			if (this.fixedAt == null) {

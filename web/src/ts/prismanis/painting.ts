@@ -1,5 +1,6 @@
 import { dist } from "./helpers";
 import { Vec2 } from "./primitives";
+import { ToolHelper } from "./render";
 import { SceneCurveObject } from "./scene";
 
 export type Curve = {
@@ -9,15 +10,12 @@ export type Curve = {
 	color?: string;
 };
 
-const DEFAULT_THICKNESS = 8;
-const DEFAULT_STROKE_COLOR = "#ffffff";
-const DEFAULT_FILL_COLOR = "#ffffff88";
 const DEFAULT_DRAWING_THRESHOLD = 20;
 
 export type PaintOptions = {
 	closedDistanceThreshold: number;
 	drawingThreshold: number;
-	canvas: HTMLCanvasElement;
+	hlp: ToolHelper;
 	onCurveClosed?: (curve: Curve) => void;
 };
 
@@ -33,9 +31,9 @@ export class Paint {
 	}
 
 	init() {
-		this.o.canvas.addEventListener("mousedown", this.startPath.bind(this));
-		this.o.canvas.addEventListener("mousemove", this.addPoint.bind(this));
-		this.o.canvas.addEventListener("mouseup", (ev) => {
+		this.o.hlp.registerMouseDownListener(this.startPath.bind(this));
+		this.o.hlp.registerMouseMoveListener(this.addPoint.bind(this));
+		this.o.hlp.registerMouseUpListener((ev) => {
 			if (!this.cur) {
 				return;
 			}
@@ -75,9 +73,7 @@ export class Paint {
 	addPoint(event: MouseEvent) {
 		if (!this.enabled) return;
 		if (!this.cur) return;
-		const rect = this.o.canvas.getBoundingClientRect();
-		const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-
+		const point = this.o.hlp.mpg(event);
 		if (this.cur.points.length === 0) {
 			this.cur.points.push(point);
 			return;
@@ -166,63 +162,4 @@ function recognizeCurveClosedness(curve: Curve, threshold: number): void {
 		return;
 	}
 
-}
-
-export function drawCurveObject(ctx: CanvasRenderingContext2D, curveObj: SceneCurveObject) {
-	const curve = curveObj.curve;
-	if (curve.points.length === 0) return;
-
-	const thickness = curve.thickness ?? DEFAULT_THICKNESS;
-	const color = curve.color ?? DEFAULT_STROKE_COLOR;
-
-	ctx.save();
-	ctx.lineWidth = thickness;
-	ctx.strokeStyle = color;
-	ctx.fillStyle = DEFAULT_FILL_COLOR;
-
-	const pos = curveObj.transform.getPosition();
-	const rot = curveObj.transform.getRotation();
-	ctx.translate(pos.x, pos.y);
-	ctx.rotate(rot);
-	ctx.beginPath();
-	ctx.moveTo(curve.points[0].x, curve.points[0].y);
-	for (let i = 1; i < curve.points.length; i++) {
-		ctx.lineTo(curve.points[i].x, curve.points[i].y);
-	}
-	ctx.closePath();
-	ctx.fill();
-	ctx.stroke();
-
-	ctx.fillStyle = "#ff0000";
-	for (let i = 0; i < curve.points.length; i++) {
-		const p = curve.points[i];
-		ctx.beginPath();
-		ctx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
-		ctx.fill();
-	}
-	ctx.restore();
-}
-
-export function drawCurve(ctx: CanvasRenderingContext2D, curve: Curve) {
-	if (curve.points.length === 0) return;
-
-	const thickness = curve.thickness ?? DEFAULT_THICKNESS;
-	const color = curve.color ?? DEFAULT_STROKE_COLOR;
-
-	ctx.save();
-	ctx.lineWidth = thickness;
-	ctx.strokeStyle = color;
-
-	ctx.beginPath();
-	ctx.moveTo(curve.points[0].x, curve.points[0].y);
-	for (let i = 1; i < curve.points.length; i++) {
-		ctx.lineTo(curve.points[i].x, curve.points[i].y);
-	}
-	if (curve.isClosed) {
-		ctx.closePath();
-		ctx.fillStyle = DEFAULT_FILL_COLOR;
-		ctx.fill();
-	}
-	ctx.stroke();
-	ctx.restore();
 }

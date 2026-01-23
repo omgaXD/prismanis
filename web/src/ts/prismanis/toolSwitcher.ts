@@ -2,30 +2,31 @@ import { Curve, Paint } from "./painting";
 import { LightRaycaster } from "./light";
 import { Scene } from "./scene";
 import { TransformTool } from "./transformTool";
+import { ToolHelper } from "./render";
 
-export function initPaintTools(canvas: HTMLCanvasElement, onClosed: (curve: Curve) => void) {
+export function initPaintTools(hlp: ToolHelper, onClosed: (curve: Curve) => void) {
 	const paint = new Paint({
 		closedDistanceThreshold: 20,
 		drawingThreshold: 20,
-		canvas: canvas,
+		hlp,
 		onCurveClosed: onClosed,
 	});
 	paint.init();
 	return paint;
 }
 
-export function initLightRaycaster(canvas: HTMLCanvasElement, getTransformedCurves: () => Curve[]) {
+export function initLightRaycaster(hlp: ToolHelper, getTransformedCurves: () => Curve[]) {
 	const lightRaycaster = new LightRaycaster({
-		canvas,
+		hlp,
 		getTransformedCurves,
 	});
 	lightRaycaster.init();
 	return lightRaycaster;
 }
 
-export function initTransformTool(canvas: HTMLCanvasElement, scene: Scene) {
+export function initTransformTool(hlp: ToolHelper, scene: Scene) {
 	const transformTool = new TransformTool({
-		canvas,
+		hlp,
 		scene,
 	});
 	return transformTool;

@@ -1,4 +1,4 @@
-import { Curve, drawCurve, drawCurveObject, Paint } from "./painting";
+import { Curve, Paint } from "./painting";
 import { LightRaycaster } from "./light";
 import { curveAdderFactory, Scene, Transform } from "./scene";
 import {
@@ -8,125 +8,21 @@ import {
 	setupClearButton,
 	initTransformTool,
 } from "./toolSwitcher";
+import { Renderer } from "./render";
+import { getTransformedCurvesFromScene } from "./helpers";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
 let currentScene = new Scene();
 
-function adjustCanvasSize() {
-	canvas.width = window.innerWidth;
-	canvas.height = window.innerHeight - canvas.getBoundingClientRect().top;
-}
-
-function setupRender(paint: Paint, lightRaycaster: LightRaycaster) {
-	function renderScene() {
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		dottedCanvas(ctx);
-		currentScene.objects.forEach((obj) => {
-			if (obj.type === "curve") {
-				drawCurveObject(ctx, obj);
-			}
-		});
-
-		currentScene.selectedObjectIds.forEach((id) => {
-			const obj = currentScene.getObjectById(id);
-			if (obj) {
-				drawSelectionAround(ctx, obj.transform);
-			}
-		});
-		if (paint.cur) {
-			drawCurve(ctx, paint.cur);
-		}
-		for (const ray of lightRaycaster.rays) {
-			drawCurve(ctx, ray);
-		}
-		requestAnimationFrame(renderScene);
-	}
-	requestAnimationFrame(renderScene);
-}
-
-function drawRotationHandle(ctx: CanvasRenderingContext2D, obj: Transform) {
-	const rect = obj.getCorners();
-	const centerTop = {
-		x: (rect.tl.x + rect.tr.x) / 2,
-		y: (rect.tl.y + rect.tr.y) / 2,
-	};
-	const handlePos = {
-		x: centerTop.x + 30 * Math.sin(obj.getRotation()),
-		y: centerTop.y + -30 * Math.cos(obj.getRotation()),
-	};
-
-	ctx.save();
-	ctx.strokeStyle = "#ff8888";
-	ctx.lineWidth = 4;
-	ctx.beginPath();
-	ctx.moveTo(centerTop.x, centerTop.y);
-	ctx.lineTo(handlePos.x, handlePos.y);
-	ctx.stroke();
-
-	ctx.fillStyle = "#ff8888";
-	ctx.beginPath();
-	ctx.arc(handlePos.x, handlePos.y, 8, 0, 2 * Math.PI);
-	ctx.fill();
-	ctx.restore();
-}
-
-function drawSelectionAround(ctx: CanvasRenderingContext2D, obj: Transform) {
-	const rect = obj.getCorners();
-	ctx.save();
-	ctx.strokeStyle = "#8888ff";
-	ctx.lineWidth = 6;
-	ctx.beginPath();
-	ctx.moveTo(rect.tl.x, rect.tl.y);
-	ctx.lineTo(rect.tr.x, rect.tr.y);
-	ctx.lineTo(rect.br.x, rect.br.y);
-	ctx.lineTo(rect.bl.x, rect.bl.y);
-	ctx.closePath();
-	ctx.stroke();
-	ctx.restore();
-
-	drawRotationHandle(ctx, obj);
-}
-
-function dottedCanvas(ctx: CanvasRenderingContext2D) {
-	// Dotted grid background
-	const gridSize = 50;
-	ctx.strokeStyle = "#ffffff22";
-	ctx.lineWidth = 1;
-	for (let x = 0; x < ctx.canvas.width; x += gridSize) {
-		for (let y = 0; y < ctx.canvas.height; y += gridSize) {
-			ctx.beginPath();
-			ctx.arc(x, y, 1, 0, 2 * Math.PI);
-			ctx.fillStyle = "#ffffff22";
-			ctx.fill();
-		}
-	}
-}
-
-function getTransformedCurvesFromScene(scene: Scene): Curve[] {
-	const curves: Curve[] = [];
-	for (const obj of scene.getAllOfType("curve")) {
-		const transformedCurve: Curve = {
-			points: obj.curve.points.map((p) => {
-				const tp = obj.transform.apply(p);
-				return { x: tp.x, y: tp.y };
-			}),
-			thickness: obj.curve.thickness,
-			color: obj.curve.color,
-			isClosed: obj.curve.isClosed,
-		};
-		curves.push(transformedCurve);
-	}
-	return curves;
-}
 
 if (ctx) {
-	adjustCanvasSize();
-	window.addEventListener("resize", adjustCanvasSize);
+	const renderer = new Renderer(canvas);
 
-	const paint = initPaintTools(canvas, curveAdderFactory(currentScene));
-	const lightRaycaster = initLightRaycaster(canvas, () => getTransformedCurvesFromScene(currentScene));
-	const transformTool = initTransformTool(canvas, currentScene);
+	const paint = initPaintTools(renderer.getToolHelper(), curveAdderFactory(currentScene));
+	const lightRaycaster = initLightRaycaster(renderer.getToolHelper(), () => getTransformedCurvesFromScene(currentScene));
+	const transformTool = initTransformTool(renderer.getToolHelper(), currentScene);
+	renderer.setupRender(currentScene, paint, lightRaycaster);
 
 	setupToolSwitcher([
 		{ tool: paint, name: "draw" },
@@ -134,5 +30,4 @@ if (ctx) {
 		{ tool: transformTool, name: "transform" },
 	]);
 	setupClearButton(currentScene);
-	setupRender(paint, lightRaycaster);
 }

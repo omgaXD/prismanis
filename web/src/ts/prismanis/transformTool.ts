@@ -1,8 +1,9 @@
 import { dist, pointInRect } from "./helpers";
+import { ToolHelper } from "./render";
 import { Scene } from "./scene";
 
 export type TransformToolOptions = {
-	canvas: HTMLCanvasElement;
+	hlp: ToolHelper;
 	scene: Scene;
 };
 
@@ -24,19 +25,15 @@ export class TransformTool {
 	}
 
 	constructor(private o: TransformToolOptions) {
-		this.o.canvas.addEventListener("mousedown", this.onMouseDown.bind(this));
-		this.o.canvas.addEventListener("mouseup", this.onMouseUp.bind(this));
-		this.o.canvas.addEventListener("mousemove", this.onMouseMove.bind(this));
+		this.o.hlp.registerMouseDownListener(this.onMouseDown.bind(this));
+		this.o.hlp.registerMouseUpListener(this.onMouseUp.bind(this));
+		this.o.hlp.registerMouseMoveListener(this.onMouseMove.bind(this));
 	}
 
 	tryStartRotation(event: MouseEvent): boolean {
 		if (this.o.scene.selectedObjectIds.length !== 1) return false;
 
-		const rect = this.o.canvas.getBoundingClientRect();
-		const mousePos = {
-			x: event.clientX - rect.left,
-			y: event.clientY - rect.top,
-		};
+		const mousePos = this.o.hlp.mpg(event);
 
 		const obj = this.o.scene.getObjectById(this.o.scene.selectedObjectIds[0]);
 		if (!obj) return false;
@@ -65,11 +62,7 @@ export class TransformTool {
 		// Find first object being touched
 		const shiftKey = event.shiftKey;
 
-		const rect = this.o.canvas.getBoundingClientRect();
-		const mousePos = {
-			x: event.clientX - rect.left,
-			y: event.clientY - rect.top,
-		};
+		const mousePos = this.o.hlp.mpg(event);
 
 		if (this.tryStartRotation(event)) {
 			return;
@@ -119,11 +112,7 @@ export class TransformTool {
 			return;
 		}
 
-		const rect = this.o.canvas.getBoundingClientRect();
-		const mousePos = {
-			x: event.clientX - rect.left,
-			y: event.clientY - rect.top,
-		};
+		const mousePos = this.o.hlp.mpg(event);
 
 		// Treat as click
 		const objId = this.o.scene.selectedObjectIds[0];
@@ -143,11 +132,8 @@ export class TransformTool {
 	}
 
 	rotate(event: MouseEvent) {
-		const rect = this.o.canvas.getBoundingClientRect();
-		const mousePos = {
-			x: event.clientX - rect.left,
-			y: event.clientY - rect.top,
-		};
+		const mousePos = this.o.hlp.mpg(event);
+		
 		this.lastMousePos = mousePos;
 
 		const obj = this.o.scene.getObjectById(this.o.scene.selectedObjectIds[0]);
@@ -158,11 +144,8 @@ export class TransformTool {
 		obj.transform.setRotation(angle + Math.PI / 2);
 	}
 	drag(event: MouseEvent) {
-		const rect = this.o.canvas.getBoundingClientRect();
-		const mousePos = {
-			x: event.clientX - rect.left,
-			y: event.clientY - rect.top,
-		};
+		const mousePos = this.o.hlp.mpg(event);
+		
 		const mouseDelta = {
 			x: mousePos.x - this.lastMousePos.x,
 			y: mousePos.y - this.lastMousePos.y,
