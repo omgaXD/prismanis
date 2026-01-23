@@ -16,6 +16,7 @@ export class TransformTool {
 	private isReasonableDrag = false;
 	private mightDeselect: boolean = false;
 	private recentlySelectedIds: Set<string> = new Set();
+	private transformActionIndex: number | null = null;
 
 	toggle(enabled: boolean) {
 		this.enabled = enabled;
@@ -51,6 +52,7 @@ export class TransformTool {
 		const handleRadius = 8;
 		if (dist(mousePos, handlePos) <= handleRadius) {
 			this.rotating = true;
+			this.transformActionIndex = this.o.scene.startTransform(this.o.scene.selectedObjectIds);
 			return true;
 		}
 
@@ -68,7 +70,7 @@ export class TransformTool {
 			return;
 		}
 
-		for (const obj of this.o.scene.objects) {
+		for (const obj of this.o.scene.getObjects()) {
 			if (this.recentlySelectedIds.has(obj.id)) continue;
 			const rect = obj.transform.getBoundingRect();
 			if (pointInRect(mousePos, rect)) {
@@ -81,6 +83,7 @@ export class TransformTool {
 						this.o.scene.selectOnly(obj.id);
 					}
 				}
+				this.transformActionIndex = this.o.scene.startTransform(this.o.scene.selectedObjectIds);
 				this.dragging = true;
 				this.lastMousePos = mousePos;
 				this.initialMousePos = mousePos;
@@ -95,11 +98,21 @@ export class TransformTool {
 
 	onMouseUp(event: MouseEvent) {
 		if (!this.enabled) return;
-		this.dragging = false;
+		if (this.dragging) {
+			if (this.transformActionIndex !== null) {
+				this.o.scene.endTransform(this.transformActionIndex);
+				this.transformActionIndex = null;
+			}
+			this.dragging = false;
+		}
 		if (!this.o.scene.selectedObjectIds.length) return;
 		if (this.rotating) {
 			this.rotating = false;
 			this.mightDeselect = false;
+			if (this.transformActionIndex !== null) {
+				this.o.scene.endTransform(this.transformActionIndex);
+				this.transformActionIndex = null;
+			}
 			return;
 		}
 		if (this.isReasonableDrag === true) {
@@ -117,7 +130,7 @@ export class TransformTool {
 		// Treat as click
 		const objId = this.o.scene.selectedObjectIds[0];
 		this.recentlySelectedIds.add(objId);
-		for (const obj of this.o.scene.objects) {
+		for (const obj of this.o.scene.getObjects()) {
 			if (this.recentlySelectedIds.has(obj.id)) continue;
 			const rect = obj.transform.getBoundingRect();
 			if (pointInRect(mousePos, rect)) {
