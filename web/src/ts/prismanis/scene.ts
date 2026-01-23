@@ -1,4 +1,4 @@
-import { Curve } from "./drawing";
+import { Curve } from "./painting";
 import { Rect, Vec2 } from "./primitives";
 
 export class Scene {
@@ -47,14 +47,14 @@ export class Scene {
 		}
 	}
 
-    deselect() {
-        this.selectedObjectIds.length = 0;
-    }
+	deselect() {
+		this.selectedObjectIds.length = 0;
+	}
 
-    clear() {
-        this.objects.length = 0;
-        this.selectedObjectIds.length = 0;
-    }
+	clear() {
+		this.objects.length = 0;
+		this.selectedObjectIds.length = 0;
+	}
 }
 
 export function curveAdderFactory(scene: Scene) {
@@ -251,27 +251,27 @@ export class Transform {
 		this.scale = { x: newSize.x / this.size.x, y: newSize.y / this.size.y };
 	}
 
-    apply(point: Vec2): Vec2 {
-        const cos = Math.cos(this.rot);
-        const sin = Math.sin(this.rot);
+	apply(point: Vec2): Vec2 {
+		const cos = Math.cos(this.rot);
+		const sin = Math.sin(this.rot);
 
-        // Scale
-        let x = point.x * this.scale.x;
-        let y = point.y * this.scale.y;
+		// Scale
+		let x = point.x * this.scale.x;
+		let y = point.y * this.scale.y;
 
-        // Rotate
-        const xRotated = x * cos - y * sin;
-        const yRotated = x * sin + y * cos;
+		// Rotate
+		const xRotated = x * cos - y * sin;
+		const yRotated = x * sin + y * cos;
 
-        // Translate
-        return {
-            x: xRotated + this.pos.x,
-            y: yRotated + this.pos.y,
-        };
-    }
+		// Translate
+		return {
+			x: xRotated + this.pos.x,
+			y: yRotated + this.pos.y,
+		};
+	}
 
-    translate(delta: Vec2) {
-        this.pos.x += delta.x;
-        this.pos.y += delta.y;
-    }
+	translate(delta: Vec2) {
+		this.pos.x += delta.x;
+		this.pos.y += delta.y;
+	}
 }

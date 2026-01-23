@@ -1,7 +1,13 @@
-import { Curve, drawCurve, drawCurveObject, Paint } from "./drawing";
+import { Curve, drawCurve, drawCurveObject, Paint } from "./painting";
 import { LightRaycaster } from "./light";
 import { curveAdderFactory, Scene, Transform } from "./scene";
-import { initPaintTools, initLightRaycaster, setupToolSwitcher, setupClearButton, initTransformTool } from "./toolSwitcher";
+import {
+	initPaintTools,
+	initLightRaycaster,
+	setupToolSwitcher,
+	setupClearButton,
+	initTransformTool,
+} from "./toolSwitcher";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;

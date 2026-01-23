@@ -1,4 +1,4 @@
-import { Curve } from "./drawing";
+import { Curve } from "./painting";
 import { dist as distance, rotateVec } from "./helpers";
 import { Vec2 } from "./primitives";
 
