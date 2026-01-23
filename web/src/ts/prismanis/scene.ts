@@ -1,3 +1,4 @@
+import { calculateWidth, Lens } from "./lensHelpers";
 import { EXAGGERATED_GLASS_MATERIAL, GLASS_MATERIAL, Material } from "./material";
 import { Rect, Vec2, Curve } from "./primitives";
 
@@ -35,6 +36,19 @@ export class Scene {
 	constructor() {
 		this.objects = [];
 		this.selectedObjectIds = [];
+
+		// // For testing purposes, add a lens
+		// const testLens: Lens = {
+		// 	r1: 500,
+		// 	r2: -250,
+		// 	middleExtraThickness: 100,
+		// };
+		// const height = 400;
+		// try {
+		// 	lensAdderFactory(this)(testLens, { x: 300, y: 400 }, height);
+		// } catch (e) {
+		// 	console.error("Failed to add test lens:", e);
+		// }
 	}
 
 	addListener<K extends keyof EventMap>(type: K, listener: (event: EventMap[K]) => void) {
@@ -334,6 +348,28 @@ export function curveAdderFactory(scene: Scene) {
 	};
 }
 
+export function lensAdderFactory(scene: Scene) {
+	return function (lens: Lens, position: Vec2, height: number) {
+		const { totalWidth, leftArc, rightArc } = calculateWidth(lens, height);
+		console.log(totalWidth, leftArc, rightArc);
+		const transform = new Transform({ x: position.x, y: position.y }, 0, {
+			x: totalWidth,
+			y: height,
+		});
+
+		const sceneObject: SceneLensObject = {
+			id: crypto.randomUUID(),
+			type: "lens",
+			lens: lens,
+			transform: transform,
+			material: EXAGGERATED_GLASS_MATERIAL,
+		};
+
+		scene.add(sceneObject);
+		return sceneObject;
+	};
+}
+
 export type SceneActionBase = {};
 
 export type SceneAddObjectAction = SceneActionBase & {
@@ -368,7 +404,13 @@ export type SceneCurveObject = SceneObjectBase & {
 	material: Material;
 };
 
-export type SceneObject = SceneCurveObject;
+export type SceneLensObject = SceneObjectBase & {
+	type: "lens";
+	lens: Lens;
+	material: Material;
+};
+
+export type SceneObject = SceneCurveObject | SceneLensObject;
 
 export class Transform {
 	/** transform origin (tries to be the center) */

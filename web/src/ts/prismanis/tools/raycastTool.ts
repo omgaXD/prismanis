@@ -1,8 +1,9 @@
 import { dist as distance, normalizeVec2, rotateVec, TransformedCurve } from "../helpers";
-import { AIR_MATERIAL } from "../material";
+import { calculateWidth } from "../lensHelpers";
+import { AIR_MATERIAL, Material } from "../material";
 import { Curve, Vec2 } from "../primitives";
 import { ToolHelper } from "../render";
-import { Scene } from "../scene";
+import { Scene, SceneObject } from "../scene";
 import { ToolSettingSelect } from "../toolSettings";
 import { AbstractTool, BaseToolOptions } from "./tool";
 
@@ -42,15 +43,15 @@ const SUNLIGHT_RAY_CONFIG = [
 
 const LASER_RAY_CONFIG = [{ wavelength: 700, opacity: 1.0, initialAngle: 0 }];
 
-const FLASHLIGHT_RAY_CONFIG = Array.from({ length: 21 }, (_, i) => {
+const FLASHLIGHT_RAY_CONFIG = Array.from({ length: 41 }, (_, i) => {
 	// +1 degree to -1 degree spread
 	const angle = ((i / 20) * 2 - 1) * (Math.PI / 180);
 	return { wavelength: 600, opacity: 0.05, initialAngle: angle };
 });
 
-const LAMP_RAY_CONFIG = Array.from({ length: 180 }, (_, i) => {
-	const angle = i * 2 * (Math.PI / 180);
-	return { wavelength: 600, opacity: 0.04, initialAngle: angle };
+const LAMP_RAY_CONFIG = Array.from({ length: 360 }, (_, i) => {
+	const angle = (i) * (Math.PI / 180);
+	return { wavelength: 600, opacity: 0.08, initialAngle: angle };
 });
 
 const configs = {
@@ -157,58 +158,115 @@ export class RaycastTool extends AbstractTool {
 		}
 	}
 
+	// new logic - will use formulas
 	ray(at: Vec2, dir: Vec2, o: RayOptions): RaycastRay {
-		const step = 2;
-		const maxLength = 5000;
-		const points: Vec2[] = [];
+		const points: Vec2[] = [at];
 
-		let curMedium = this.getMediumAt(at, o.wavelength);
+		const insideObjects: Map<string, Material> = new Map();
+		for (const obj of this.o.scene.getObjects()) {
+			if (this.isVec2InObject(at, obj)) {
+				insideObjects.set(obj.id, obj.material);
+			}
+		}
 
-		for (let i = 0; i < maxLength; i += step) {
-			points.push(at);
-			at = { x: at.x + dir.x * step, y: at.y + dir.y * step };
-			if (!this.o.scene.isPointInbounds(at)) {
+		let curAt = at;
+		let curDir = dir;
+		let depth = 50; // Max number of interactions
+		while (depth--) {
+			curAt = { x: curAt.x + curDir.x * 0.01, y: curAt.y + curDir.y * 0.01 }; // small nudge to avoid self-intersection
+			const best = this.o.scene.getObjects().reduce(
+				(best, obj) => {
+					const result = this.intersect(curAt, curDir, obj);
+					if (result && result.lambda < best.lambda) {
+						return result;
+					}
+					return best;
+				},
+				{ lambda: Infinity, normal: { x: 0, y: 0 }, material: null as Material | null, id: "" },
+			);
+
+			if (best.lambda === Infinity) {
+				// No intersection
+				points.push({
+					x: curAt.x + curDir.x * 5000,
+					y: curAt.y + curDir.y * 5000,
+				});
 				break;
 			}
-			const newMedium = this.getMediumAt(at, o.wavelength);
-			if (newMedium !== curMedium) {
-				const normalCurve = this.findClosestCurve(at);
-				if (normalCurve) {
-					let normal = this.findReasonableNormal(at, normalCurve.curve, normalCurve.closestPointIndex);
 
-					const n1 = curMedium;
-					const n2 = newMedium;
+			points.push({
+				x: curAt.x + curDir.x * best.lambda,
+				y: curAt.y + curDir.y * best.lambda,
+			});
 
-					// Ensure normal points against the ray (towards the incident medium)
-					const dotProduct = normal.x * dir.x + normal.y * dir.y;
-					if (dotProduct > 0) {
-						normal = { x: -normal.x, y: -normal.y };
-					}
+			curAt = points[points.length - 1];
 
-					const cosI = -(normal.x * dir.x + normal.y * dir.y);
-					const sinI = Math.sqrt(1 - cosI * cosI);
-					const incidentAngle = Math.asin(sinI);
-					const criticalAngle = Math.asin(Math.min(1, n2 / n1));
-					if (incidentAngle > criticalAngle) {
-						// Total internal reflection
-						dir = {
-							x: dir.x + 2 * cosI * normal.x,
-							y: dir.y + 2 * cosI * normal.y,
-						};
-						// Keep curMedium as n1, ray reflected back
-					} else {
-						const sinT = (n1 / n2) * sinI;
-						const cosT = Math.sqrt(1 - sinT * sinT);
-						dir = {
-							x: (n1 / n2) * dir.x + ((n1 / n2) * cosI - cosT) * normal.x,
-							y: (n1 / n2) * dir.y + ((n1 / n2) * cosI - cosT) * normal.y,
-						};
-						curMedium = n2;
-					}
+			if (!best.material) {
+				best.material = AIR_MATERIAL;
+			}
+
+			let n2;
+			if (insideObjects.has(best.id)) {
+				// get everything except for this object's material
+				const materials = Array.from(insideObjects.values()).filter((m) => m !== best.material);
+				const A = materials.reduce((sum, m) => sum + m.A, AIR_MATERIAL.A);
+				const B = materials.reduce((sum, m) => sum + m.B, AIR_MATERIAL.B);
+				n2 = A + B / (o.wavelength * o.wavelength);
+			} else {
+				n2 = best.material.A + best.material.B / (o.wavelength * o.wavelength);
+			}
+			// alter direction based on refraction
+			const A =
+				insideObjects.size === 0
+					? AIR_MATERIAL.A
+					: Array.from(insideObjects.values()).reduce((sum, m) => sum + m.A, 0);
+			const B =
+				insideObjects.size === 0
+					? AIR_MATERIAL.B
+					: Array.from(insideObjects.values()).reduce((sum, m) => sum + m.B, 0);
+			const n1 = A + B / (o.wavelength * o.wavelength);
+			// Ensure normal points against the ray (towards the incident medium)
+			const dotProduct = best.normal.x * curDir.x + best.normal.y * curDir.y;
+			let normal = normalizeVec2(best.normal); // Ensure normal is normalized
+			if (dotProduct > 0) {
+				normal = { x: -normal.x, y: -normal.y };
+			}
+
+			// Ensure curDir is normalized
+			curDir = normalizeVec2(curDir);
+
+			const cosI = Math.max(-1, Math.min(1, -(normal.x * curDir.x + normal.y * curDir.y))); // Clamp to [-1, 1]
+			const sinI = Math.sqrt(Math.max(0, 1 - cosI * cosI)); // Ensure non-negative
+			const incidentAngle = Math.asin(sinI);
+			const criticalAngle = Math.asin(Math.min(1, n2 / n1));
+			if (incidentAngle > criticalAngle) {
+				// Total internal reflection
+				curDir = {
+					x: curDir.x + 2 * cosI * normal.x,
+					y: curDir.y + 2 * cosI * normal.y,
+				};
+				// Keep curMedium as n1, ray reflected back
+			} else {
+				const sinT = (n1 / n2) * sinI;
+				// Guard against numerical precision issues
+				if (sinT > 1) {
+					// Should have been caught by critical angle check, but numerical precision
+					// Force total internal reflection
+					curDir = {
+						x: curDir.x + 2 * cosI * normal.x,
+						y: curDir.y + 2 * cosI * normal.y,
+					};
 				} else {
-					// Fallback if no curve found (shouldn't happen if medium changed)
-					console.warn("No curve found for medium change at", at);
-					curMedium = newMedium;
+					const cosT = Math.sqrt(1 - sinT * sinT);
+					curDir = {
+						x: (n1 / n2) * curDir.x + ((n1 / n2) * cosI - cosT) * normal.x,
+						y: (n1 / n2) * curDir.y + ((n1 / n2) * cosI - cosT) * normal.y,
+					};
+					if (insideObjects.has(best.id)) {
+						insideObjects.delete(best.id);
+					} else {
+						insideObjects.set(best.id, best.material);
+					}
 				}
 			}
 		}
@@ -216,86 +274,176 @@ export class RaycastTool extends AbstractTool {
 		return { points, isClosed: false, wavelength: o.wavelength, opacity: o.opacity };
 	}
 
-	private findClosestCurve(point: Vec2): { curve: Curve; closestPointIndex: number } | null {
-		let closestCurve: Curve | null = null;
-		let closestPointIndex = -1;
-		let minDistance = Infinity;
-		for (const curve of this.transformedCurves) {
-			for (let i = 0; i < curve.points.length; i++) {
-				const dist = distance(point, curve.points[i]);
-				if (dist < minDistance) {
-					minDistance = dist;
-					closestCurve = curve;
-					closestPointIndex = i;
+	private intersect(
+		at: Vec2,
+		dir: Vec2,
+		obj: SceneObject,
+	): { lambda: number; normal: Vec2; material: Material; id: string } | null {
+		let minPosLambda: number = Infinity;
+		let normal: Vec2 = { x: 0, y: 0 };
+		if (obj.type === "curve") {
+			for (let i = 0; i < obj.curve.points.length; i++) {
+				const p1raw = obj.curve.points[i];
+				const p2raw = obj.curve.points[(i + 1) % obj.curve.points.length];
+				const p1 = obj.transform.apply(p1raw);
+				const p2 = obj.transform.apply(p2raw);
+
+				const denom = (p2.y - p1.y) * dir.x - (p2.x - p1.x) * dir.y;
+				if (denom === 0) {
+					continue; // Parallel lines
+				}
+				const t = ((p2.x - p1.x) * (at.y - p1.y) - (p2.y - p1.y) * (at.x - p1.x)) / denom;
+				const u = (dir.x * (at.y - p1.y) - dir.y * (at.x - p1.x)) / denom;
+
+				if (t >= 0 && u >= 0 && u <= 1) {
+					if (t < minPosLambda) {
+						minPosLambda = t;
+						// Calculate normal (normalized)
+						const edgeDir = { x: p2.x - p1.x, y: p2.y - p1.y };
+						normal = normalizeVec2({ x: -edgeDir.y, y: edgeDir.x });
+					}
+				}
+			}
+		} else if (obj.type == "lens") {
+			type Circle = { center: Vec2; radius: number };
+			const circles: Circle[] = [];
+			const height = obj.transform.getSize().y;
+			const thick = obj.lens.middleExtraThickness;
+			const pos = obj.transform.getPosition();
+			const rot = obj.transform.getRotation();
+
+			const { leftArc, rightArc } = calculateWidth(obj.lens, height);
+
+			// Left arc circle
+			const leftCenterLocal: Vec2 = {
+				x: -thick / 2 + (obj.lens.r1 >= 0 ? obj.lens.r1 - leftArc : -obj.lens.r1 + leftArc),
+				y: 0,
+			};
+			const leftCenterWorld = {
+				x: pos.x + (Math.cos(rot) * leftCenterLocal.x - Math.sin(rot) * leftCenterLocal.y),
+				y: pos.y + (Math.sin(rot) * leftCenterLocal.x + Math.cos(rot) * leftCenterLocal.y),
+			};
+			circles.push({ center: leftCenterWorld, radius: Math.abs(obj.lens.r1) });
+
+			// Right arc circle
+			const rightCenterLocal: Vec2 = {
+				x: thick / 2 + (obj.lens.r2 >= 0 ? -obj.lens.r2 + rightArc : obj.lens.r2 - rightArc),
+				y: 0,
+			};
+			const rightCenterWorld = {
+				x: pos.x + (Math.cos(rot) * rightCenterLocal.x - Math.sin(rot) * rightCenterLocal.y),
+				y: pos.y + (Math.sin(rot) * rightCenterLocal.x + Math.cos(rot) * rightCenterLocal.y),
+			};
+			circles.push({ center: rightCenterWorld, radius: Math.abs(obj.lens.r2) });
+
+			// Check ray-circle intersections
+			for (const circle of circles) {
+				const f: Vec2 = { x: at.x - circle.center.x, y: at.y - circle.center.y };
+
+				const a = dir.x * dir.x + dir.y * dir.y;
+				const b = 2 * (f.x * dir.x + f.y * dir.y);
+				const c = f.x * f.x + f.y * f.y - circle.radius * circle.radius;
+
+				const discriminant = b * b - 4 * a * c;
+				if (discriminant < 0) {
+					continue; // No intersection
+				}
+
+				const sqrtDiscriminant = Math.sqrt(discriminant);
+				const t1 = (-b - sqrtDiscriminant) / (2 * a);
+				const t2 = (-b + sqrtDiscriminant) / (2 * a);
+
+				if (t1 >= 0 && t1 < minPosLambda) {
+					minPosLambda = t1;
+					// Calculate normal at intersection point
+					const intersectionPoint = {
+						x: at.x + dir.x * t1,
+						y: at.y + dir.y * t1,
+					};
+					normal = normalizeVec2({
+						x: intersectionPoint.x - circle.center.x,
+						y: intersectionPoint.y - circle.center.y,
+					});
+				}
+				if (t2 >= 0 && t2 < minPosLambda) {
+					minPosLambda = t2;
+					// Calculate normal at intersection point
+					const intersectionPoint = {
+						x: at.x + dir.x * t2,
+						y: at.y + dir.y * t2,
+					};
+					normal = normalizeVec2({
+						x: intersectionPoint.x - circle.center.x,
+						y: intersectionPoint.y - circle.center.y,
+					});
+				}
+			}
+
+			// Check line segment intersections (top and bottom edges)
+			const halfHeight = height / 2;
+			const topLeftLocal: Vec2 = { x: -thick / 2, y: -halfHeight };
+			const topRightLocal: Vec2 = { x: thick / 2, y: -halfHeight };
+			const bottomLeftLocal: Vec2 = { x: -thick / 2, y: halfHeight };
+			const bottomRightLocal: Vec2 = { x: thick / 2, y: halfHeight };
+
+			const cornersWorld = [topLeftLocal, topRightLocal, bottomRightLocal, bottomLeftLocal].map((local) => ({
+				x: pos.x + (Math.cos(rot) * local.x - Math.sin(rot) * local.y),
+				y: pos.y + (Math.sin(rot) * local.x + Math.cos(rot) * local.y),
+			}));
+
+			const edges = [
+				[cornersWorld[0], cornersWorld[1]], // Top edge
+				[cornersWorld[1], cornersWorld[2]], // Right edge
+				[cornersWorld[2], cornersWorld[3]], // Bottom edge
+				[cornersWorld[3], cornersWorld[0]], // Left edge
+			];
+
+			for (const [p1, p2] of edges) {
+				const denom = (p2.y - p1.y) * dir.x - (p2.x - p1.x) * dir.y;
+				if (denom === 0) {
+					continue; // Parallel lines
+				}
+				const t = ((p2.x - p1.x) * (at.y - p1.y) - (p2.y - p1.y) * (at.x - p1.x)) / denom;
+				const u = ((at.x - p1.x) * dir.y - (at.y - p1.y) * dir.x) / denom;
+
+				if (t >= 0 && u >= 0 && u <= 1) {
+					if (t < minPosLambda) {
+						minPosLambda = t;
+						// Calculate normal (normalized)
+						const edgeDir = { x: p2.x - p1.x, y: p2.y - p1.y };
+						normal = normalizeVec2({ x: -edgeDir.y, y: edgeDir.x });
+					}
 				}
 			}
 		}
-		if (closestCurve === null) {
-			return null;
-		}
-		return { curve: closestCurve, closestPointIndex };
+		return { lambda: minPosLambda, normal, material: obj.material, id: obj.id };
 	}
 
-	private findReasonableNormal(point: Vec2, curve: Curve, indexOnCurve?: number): Vec2 {
-		if (!indexOnCurve) {
-			// Find the closest Vec2 on the curve to the given Vec2
-			let closestVec2: Vec2 | null = null;
-			let minDistance = Infinity;
-			for (const p of curve.points) {
-				const dist = distance(point, p);
-				if (dist < minDistance) {
-					minDistance = dist;
-					closestVec2 = p;
-				}
+	private isVec2InObject(point: Vec2, obj: SceneObject): boolean {
+		if (obj.type === "curve") {
+			// Ray-casting algorithm to determine if Vec2 is in polygon
+			let inside = false;
+			const n = obj.curve.points.length;
+			for (let i = 0, j = n - 1; i < n; j = i++) {
+				const xiraw = obj.curve.points[i].x,
+					yiraw = obj.curve.points[i].y;
+				const xjraw = obj.curve.points[j].x,
+					yjraw = obj.curve.points[j].y;
+
+				const xi = obj.transform.apply({ x: xiraw, y: yiraw }).x;
+				const yi = obj.transform.apply({ x: xiraw, y: yiraw }).y;
+				const xj = obj.transform.apply({ x: xjraw, y: yjraw }).x;
+				const yj = obj.transform.apply({ x: xjraw, y: yjraw }).y;
+
+				const intersect =
+					yi > point.y !== yj > point.y && point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi;
+				if (intersect) inside = !inside;
 			}
-			if (!closestVec2) {
-				return { x: 0, y: 0 };
-			}
-			indexOnCurve = curve.points.indexOf(closestVec2);
+			return inside;
+		} else if (obj.type === "lens") {
+			return false;
+		} else {
+			return false;
 		}
-
-		// Approximate tangent by looking at neighboring points
-		const prevIndex = (indexOnCurve - 1 + curve.points.length) % curve.points.length;
-		const nextIndex = (indexOnCurve + 1) % curve.points.length;
-
-		const tangent = {
-			x: curve.points[nextIndex].x - curve.points[prevIndex].x,
-			y: curve.points[nextIndex].y - curve.points[prevIndex].y,
-		};
-		// Normal is perpendicular to tangent
-		const normal = { x: -tangent.y, y: tangent.x };
-		return normalizeVec2(normal);
-	}
-
-	private getMediumAt(point: Vec2, forWavelength: number): number {
-		const wavelengthSq = forWavelength * forWavelength;
-		let n = 0;
-		let anyCurves = false;
-		for (const curve of this.transformedCurves) {
-			if (this.isVec2InCurve(point, curve)) {
-				n += curve.material.A + curve.material.B / wavelengthSq;
-				anyCurves = true;
-			}
-		}
-		if (!anyCurves) {
-			return AIR_MATERIAL.A + AIR_MATERIAL.B / wavelengthSq;
-		}
-		return n;
-	}
-
-	private isVec2InCurve(point: Vec2, curve: Curve): boolean {
-		// Ray-casting algorithm to determine if Vec2 is in polygon
-		let inside = false;
-		const n = curve.points.length;
-		for (let i = 0, j = n - 1; i < n; j = i++) {
-			const xi = curve.points[i].x,
-				yi = curve.points[i].y;
-			const xj = curve.points[j].x,
-				yj = curve.points[j].y;
-
-			const intersect = yi > point.y !== yj > point.y && point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi;
-			if (intersect) inside = !inside;
-		}
-		return inside;
 	}
 }

@@ -7,6 +7,7 @@ import { RaycastTool } from "./tools/raycastTool";
 import { TransformTool } from "./tools/transformTool";
 import { registerTool } from "./tools/tool";
 import { trackSceneObjects } from "./sceneObjectTracker";
+import { LensTool } from "./tools/lensTool";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
@@ -34,6 +35,14 @@ if (ctx) {
 		id: "transform",
 		displayName: "Transform Tool",
 		displayDescription: "Select, move and rotate objects.",
+		hlp: renderer.getToolHelper(),
+		scene: currentScene,
+		preservesSelection: true,
+	}));
+	const lensTool = registerTool(new LensTool({
+		id: "lens",
+		displayName: "Lens Tool",
+		displayDescription: "Place lenses",
 		hlp: renderer.getToolHelper(),
 		scene: currentScene,
 		preservesSelection: true,

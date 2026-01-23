@@ -1,9 +1,10 @@
 import { RaycastTool } from "./tools/raycastTool";
 import { PaintTool } from "./tools/paintTool";
 import { Curve, Vec2 } from "./primitives";
-import { Scene, SceneCurveObject, Transform } from "./scene";
+import { Scene, SceneCurveObject, SceneLensObject, Transform } from "./scene";
 import { wavelengthToRGB } from "./helpers";
 import { registeredTools } from "./tools/tool";
+import { calculateWidth, calculateArcAngles } from "./lensHelpers";
 
 const DEFAULT_THICKNESS = 8;
 const DEFAULT_STROKE_COLOR = "#ffffff";
@@ -51,6 +52,8 @@ export class Renderer {
 		scene.getObjects().forEach((obj) => {
 			if (obj.type === "curve") {
 				drawCurveObject(this.ctx, obj);
+			} else if (obj.type === "lens") {
+				drawLensObject(this.ctx, obj);
 			}
 		});
 
@@ -64,14 +67,14 @@ export class Renderer {
 			drawCurve(this.ctx, paint.cur, "#ffff00");
 		}
 		for (const ray of lightRaycaster.rays) {
-			const {r,g,b} = wavelengthToRGB(ray.wavelength);
+			const { r, g, b } = wavelengthToRGB(ray.wavelength);
 			drawCurve(this.ctx, ray, `rgba(${r}, ${g}, ${b}, ${ray.opacity})`, true);
 		}
 	}
 
 	setupRender(scene: Scene) {
-		const paint = registeredTools.find(t => t instanceof PaintTool);
-		const lightRaycaster = registeredTools.find(t => t instanceof RaycastTool);
+		const paint = registeredTools.find((t) => t instanceof PaintTool);
+		const lightRaycaster = registeredTools.find((t) => t instanceof RaycastTool);
 		if (!(paint instanceof PaintTool) || !(lightRaycaster instanceof RaycastTool)) {
 			throw new Error("PaintTool or RaycastTool not registered");
 		}
@@ -168,7 +171,7 @@ function dottedCanvas(ctx: CanvasRenderingContext2D) {
 	}
 }
 
-export function drawCurveObject(ctx: CanvasRenderingContext2D, curveObj: SceneCurveObject) {
+function drawCurveObject(ctx: CanvasRenderingContext2D, curveObj: SceneCurveObject) {
 	const curve = curveObj.curve;
 	if (curve.points.length === 0) return;
 
@@ -204,7 +207,86 @@ export function drawCurveObject(ctx: CanvasRenderingContext2D, curveObj: SceneCu
 	ctx.restore();
 }
 
-export function drawCurve(ctx: CanvasRenderingContext2D, curve: Curve, color: string = DEFAULT_STROKE_COLOR, lightBlending: boolean = false) {
+function drawLensObject(ctx: CanvasRenderingContext2D, lensObj: SceneLensObject) {
+	const lens = lensObj.lens;
+	const pos = lensObj.transform.getPosition();
+	const rot = lensObj.transform.getRotation();
+	const height = lensObj.transform.getSize().y;
+	const thick = lens.middleExtraThickness;
+
+	ctx.save();
+
+	const { leftArc, rightArc } = calculateWidth(lens, height);
+	const heightHalf = height / 2;
+	const small1 = Math.sqrt(lens.r1 * lens.r1 - heightHalf * heightHalf);
+	const small2 = Math.sqrt(lens.r2 * lens.r2 - heightHalf * heightHalf);
+
+	ctx.translate(pos.x, pos.y);
+	ctx.rotate(rot);
+
+	ctx.fillStyle = lensObj.material.fillColor;
+	ctx.strokeStyle = lensObj.material.strokeColor;
+	ctx.lineWidth = DEFAULT_THICKNESS;
+
+	// adjust the context position according to the lens curvature
+	const diff = (rightArc - leftArc) / 2;
+	ctx.translate(-diff, 0);
+
+	ctx.beginPath();
+	ctx.moveTo(-thick / 2, -height / 2);
+
+
+	if (lens.r1 < 0) {
+		ctx.lineTo(-thick / 2 - leftArc, -height / 2);
+		ctx.arcTo(
+			(heightHalf * heightHalf / small1) - thick / 2 - leftArc,
+			0,
+			-thick / 2 - leftArc,
+			height / 2,
+			Math.abs(lens.r1),
+		);
+	} else {
+		ctx.arcTo(
+			-(heightHalf * heightHalf / small1) - thick / 2,
+			0,
+			-thick / 2,
+			height / 2,
+			Math.abs(lens.r1),
+		);
+	}
+
+	ctx.lineTo(thick / 2, height / 2);
+
+	if (lens.r2 < 0) {
+		ctx.lineTo(thick / 2 + rightArc, height / 2);
+		ctx.arcTo(
+			-(heightHalf * heightHalf / small2) + thick / 2 + rightArc,
+			0,
+			thick / 2 + rightArc,
+			-height / 2,
+			Math.abs(lens.r2),
+		);
+	} else {
+		ctx.arcTo(
+			heightHalf * heightHalf / small2 + thick / 2,
+			0,
+			thick / 2,
+			-height / 2,
+			Math.abs(lens.r2),
+		);
+	}
+	ctx.closePath();
+	ctx.fill();
+	ctx.stroke();
+	ctx.restore();
+}
+
+function drawCurve(
+	ctx: CanvasRenderingContext2D,
+	curve: Curve,
+	color: string = DEFAULT_STROKE_COLOR,
+	lightBlending: boolean = false,
+) {
 	if (curve.points.length === 0) return;
 
 	const thickness = DEFAULT_THICKNESS;
