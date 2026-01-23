@@ -12,7 +12,6 @@ function adjustCanvasSize() {
 	canvas.height = window.innerHeight - canvas.getBoundingClientRect().top;
 }
 
-
 function setupRender(paint: Paint, lightRaycaster: LightRaycaster) {
 	function renderScene() {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -58,7 +57,7 @@ function getTransformedCurvesFromScene(scene: Scene): Curve[] {
 			}),
 			thickness: obj.curve.thickness,
 			color: obj.curve.color,
-			isClosed: obj.curve.isClosed
+			isClosed: obj.curve.isClosed,
 		};
 		curves.push(transformedCurve);
 	}
@@ -72,7 +71,10 @@ if (ctx) {
 	const paint = initPaintTools(canvas, curveAdderFactory(currentScene));
 	const lightRaycaster = initLightRaycaster(canvas, () => getTransformedCurvesFromScene(currentScene));
 
-	setupToolSwitcher(paint, lightRaycaster);
+	setupToolSwitcher([
+		{ tool: paint, name: "draw" },
+		{ tool: lightRaycaster, name: "light-source" },
+	]);
 	setupClearButton(currentScene);
 	setupRender(paint, lightRaycaster);
 }

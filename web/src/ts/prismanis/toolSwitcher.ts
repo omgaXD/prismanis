@@ -5,6 +5,7 @@ import { Scene } from "./scene";
 export function initPaintTools(canvas: HTMLCanvasElement, onClosed: (curve: Curve) => void) {
     const paint = new Paint({
         closedDistanceThreshold: 20,
+        drawingThreshold: 20,
         canvas: canvas,
         onCurveClosed: onClosed,
     });
@@ -20,11 +21,26 @@ export function initLightRaycaster(canvas: HTMLCanvasElement, getTransformedCurv
     return lightRaycaster;
 }
 
-export function setupToolSwitcher(paint: Paint, lightRaycaster: LightRaycaster) {
+export function initTransformTool(canvas: HTMLCanvasElement, scene: Scene) {
+
+}
+
+
+interface Toggleable {
+	toggle(bool: boolean): void;
+}
+
+type Tool = {
+    tool: Toggleable;
+    name: string;
+}
+
+export function setupToolSwitcher(tools: Tool[]) {
     function adjustTool() {
         const checkedTool = (document.querySelector('input[name="tool"]:checked') as HTMLInputElement).value;
-        paint.toggle(checkedTool === "toggle-draw");
-        lightRaycaster.toggle(checkedTool === "toggle-light-source");
+        tools.forEach(({tool, name}) => {
+            tool.toggle(`toggle-${name}` === checkedTool);
+        });
     }
     adjustTool();
     const toolInputs = document.querySelectorAll('input[name="tool"]');
