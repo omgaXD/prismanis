@@ -1,7 +1,7 @@
 import { Curve, drawCurve, drawCurveObject, Paint } from "./drawing";
 import { LightRaycaster } from "./light";
-import { curveAdderFactory, Scene } from "./scene";
-import { initPaintTools, initLightRaycaster, setupToolSwitcher, setupClearButton } from "./toolSwitcher";
+import { curveAdderFactory, Scene, Transform } from "./scene";
+import { initPaintTools, initLightRaycaster, setupToolSwitcher, setupClearButton, initTransformTool } from "./toolSwitcher";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
@@ -21,6 +21,13 @@ function setupRender(paint: Paint, lightRaycaster: LightRaycaster) {
 				drawCurveObject(ctx, obj);
 			}
 		});
+
+		currentScene.selectedObjectIds.forEach((id) => {
+			const obj = currentScene.getObjectById(id);
+			if (obj) {
+				drawSelectionAround(ctx, obj.transform);
+			}
+		});
 		if (paint.cur) {
 			drawCurve(ctx, paint.cur);
 		}
@@ -30,6 +37,21 @@ function setupRender(paint: Paint, lightRaycaster: LightRaycaster) {
 		requestAnimationFrame(renderScene);
 	}
 	requestAnimationFrame(renderScene);
+}
+
+function drawSelectionAround(ctx: CanvasRenderingContext2D, obj: Transform) {
+	const rect = obj.getCorners();
+	ctx.save();
+	ctx.strokeStyle = "#8888ff";
+	ctx.lineWidth = 6;
+	ctx.beginPath();
+	ctx.moveTo(rect.tl.x, rect.tl.y);
+	ctx.lineTo(rect.tr.x, rect.tr.y);
+	ctx.lineTo(rect.br.x, rect.br.y);
+	ctx.lineTo(rect.bl.x, rect.bl.y);
+	ctx.closePath();
+	ctx.stroke();
+	ctx.restore();
 }
 
 function dottedCanvas(ctx: CanvasRenderingContext2D) {
@@ -70,10 +92,12 @@ if (ctx) {
 
 	const paint = initPaintTools(canvas, curveAdderFactory(currentScene));
 	const lightRaycaster = initLightRaycaster(canvas, () => getTransformedCurvesFromScene(currentScene));
+	const transformTool = initTransformTool(canvas, currentScene);
 
 	setupToolSwitcher([
 		{ tool: paint, name: "draw" },
 		{ tool: lightRaycaster, name: "light-source" },
+		{ tool: transformTool, name: "transform" },
 	]);
 	setupClearButton(currentScene);
 	setupRender(paint, lightRaycaster);

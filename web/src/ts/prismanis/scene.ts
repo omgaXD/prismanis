@@ -47,6 +47,10 @@ export class Scene {
 		}
 	}
 
+    deselect() {
+        this.selectedObjectIds.length = 0;
+    }
+
     clear() {
         this.objects.length = 0;
         this.selectedObjectIds.length = 0;
@@ -266,5 +270,10 @@ export class Transform {
             x: xRotated + this.pos.x,
             y: yRotated + this.pos.y,
         };
+    }
+
+    translate(delta: Vec2) {
+        this.pos.x += delta.x;
+        this.pos.y += delta.y;
     }
 }

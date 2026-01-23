@@ -1,6 +1,7 @@
 import { Curve, Paint } from "./drawing";
 import { LightRaycaster } from "./light";
 import { Scene } from "./scene";
+import { TransformTool } from "./transformTool";
 
 export function initPaintTools(canvas: HTMLCanvasElement, onClosed: (curve: Curve) => void) {
     const paint = new Paint({
@@ -22,7 +23,10 @@ export function initLightRaycaster(canvas: HTMLCanvasElement, getTransformedCurv
 }
 
 export function initTransformTool(canvas: HTMLCanvasElement, scene: Scene) {
-
+    const transformTool = new TransformTool({
+        canvas, scene
+    });
+    return transformTool;
 }
 
 
