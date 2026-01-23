@@ -1,10 +1,9 @@
-export type Point = {
-	x: number;
-	y: number;
-};
+import { dist } from "./helpers";
+import { Vec2 } from "./primitives";
+import { SceneCurveObject } from "./scene";
 
 export type Curve = {
-	points: Point[];
+	points: Vec2[];
 	isClosed: boolean;
 	thickness?: number;
 	color?: string;
@@ -16,12 +15,11 @@ const DEFAULT_FILL_COLOR = "#ffffff88";
 
 export type PaintOptions = {
 	closedDistanceThreshold: number;
-	ctx: CanvasRenderingContext2D;
 	canvas: HTMLCanvasElement;
+	onCurveClosed?: (curve: Curve) => void;
 };
 
 export class Paint {
-	history: Curve[] = [];
 	cur: Curve | null = null;
 
 	enabled: boolean = true;
@@ -41,13 +39,15 @@ export class Paint {
 				recognizeCurveClosedness(this.cur, this.o.closedDistanceThreshold);
 			}
 
-			this.history.push(this.cur);
+			if (this.cur.isClosed) {
+				this.o.onCurveClosed?.(this.cur);
+			}
+
 			this.cur = null;
 		});
 	}
 
 	clear() {
-		this.history.length = 0;
 		this.cur = null;
 	}
 
@@ -75,10 +75,6 @@ export class Paint {
 	}
 }
 
-export function distanceBetween(p1: Point, p2: Point): number {
-	return Math.hypot(p2.x - p1.x, p2.y - p1.y);
-}
-
 function recognizeCurveClosedness(curve: Curve, threshold: number): void {
 	if (curve.points.length <= 2) {
 		return;
@@ -88,7 +84,7 @@ function recognizeCurveClosedness(curve: Curve, threshold: number): void {
 	const last = curve.points[curve.points.length - 1];
 
 	// Step 1: naive - check if last and first point are within threshold
-	if (distanceBetween(last, first) <= threshold) {
+	if (dist(last, first) <= threshold) {
 		curve.isClosed = true;
 		console.log("Curve closed: Step 1 (naive)");
 		return;
@@ -97,7 +93,7 @@ function recognizeCurveClosedness(curve: Curve, threshold: number): void {
 	// Step 2: accounting for early closing - find last point in second half within threshold to first
 	const midpoint = Math.floor(curve.points.length / 2);
 	for (let i = curve.points.length - 1; i >= midpoint; i--) {
-		if (distanceBetween(curve.points[i], first) <= threshold) {
+		if (dist(curve.points[i], first) <= threshold) {
 			curve.points = curve.points.slice(0, i + 1);
 			curve.isClosed = true;
 			console.log("Curve closed: Step 2 (early closing)");
@@ -107,7 +103,7 @@ function recognizeCurveClosedness(curve: Curve, threshold: number): void {
 
 	// Step 3: accounting for closing elsewhere - find earliest point in first half within threshold to last
 	for (let i = 0; i < midpoint; i++) {
-		if (distanceBetween(curve.points[i], last) <= threshold) {
+		if (dist(curve.points[i], last) <= threshold) {
 			curve.points = curve.points.slice(i);
 			curve.isClosed = true;
 			console.log("Curve closed: Step 3 (closing elsewhere)");
@@ -129,7 +125,7 @@ function recognizeCurveClosedness(curve: Curve, threshold: number): void {
 				continue;
 			}
 
-			if (distanceBetween(curve.points[i], curve.points[j]) <= threshold) {
+			if (dist(curve.points[i], curve.points[j]) <= threshold) {
 				// Count points from 0 to i + points from j to end
 				const arcLength = i + (curve.points.length - 1 - j);
 				if (arcLength < minArcLength) {
@@ -152,6 +148,33 @@ function recognizeCurveClosedness(curve: Curve, threshold: number): void {
 	console.log("Curve not closed: Step 5 (give up)");
 }
 
+export function drawCurveObject(ctx: CanvasRenderingContext2D, curveObj: SceneCurveObject) {
+	const curve = curveObj.curve;
+	if (curve.points.length === 0) return;
+
+	const thickness = curve.thickness ?? DEFAULT_THICKNESS;
+	const color = curve.color ?? DEFAULT_STROKE_COLOR;
+
+	ctx.save();
+	ctx.lineWidth = thickness;
+	ctx.strokeStyle = color;
+	ctx.fillStyle = DEFAULT_FILL_COLOR;
+
+	const pos = curveObj.transform.getPosition();
+	const rot = curveObj.transform.getRotation();
+	ctx.translate(pos.x, pos.y);
+	ctx.rotate(rot);
+	ctx.beginPath();
+	ctx.moveTo(curve.points[0].x, curve.points[0].y);
+	for (let i = 1; i < curve.points.length; i++) {
+		ctx.lineTo(curve.points[i].x, curve.points[i].y);
+	}
+	ctx.closePath();
+	ctx.fill();
+	ctx.stroke();
+	ctx.restore();
+}
+
 export function drawCurve(ctx: CanvasRenderingContext2D, curve: Curve) {
 	if (curve.points.length === 0) return;
 
@@ -168,8 +191,8 @@ export function drawCurve(ctx: CanvasRenderingContext2D, curve: Curve) {
 		ctx.lineTo(curve.points[i].x, curve.points[i].y);
 	}
 	if (curve.isClosed) {
-		ctx.fillStyle = DEFAULT_FILL_COLOR;
 		ctx.closePath();
+		ctx.fillStyle = DEFAULT_FILL_COLOR;
 		ctx.fill();
 	}
 	ctx.stroke();

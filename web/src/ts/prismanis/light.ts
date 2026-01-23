@@ -1,11 +1,14 @@
-import { Curve, distanceBetween, Point } from "./drawing";
+import { Curve } from "./drawing";
+import { dist as distance } from "./helpers";
+import { Vec2 } from "./primitives";
+import { Scene } from "./scene";
 
 export type LightRaycasterOptions = {
-	history: Curve[];
+	getTransformedCurves: () => Curve[];
 	canvas: HTMLCanvasElement;
 };
 
-function normalize(p: Point): Point {
+function normalize(p: Vec2): Vec2 {
 	const length = Math.hypot(p.x, p.y);
 	if (length === 0) return { x: 0, y: 0 };
 	return { x: p.x / length, y: p.y / length };
@@ -14,7 +17,8 @@ function normalize(p: Point): Point {
 export class LightRaycaster {
 	enabled: boolean = true;
 	rays: Curve[] = [];
-	fixedAt: Point | null = null;
+	fixedAt: Vec2 | null = null;
+	transformedCurves: Curve[] = [];
 
 	constructor(private o: LightRaycasterOptions) {}
 
@@ -24,7 +28,7 @@ export class LightRaycaster {
 				return;
 			}
 			const rect = this.o.canvas.getBoundingClientRect();
-			const at: Point = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+			const at: Vec2 = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
 			this.fixedAt = at;
 		});
 
@@ -40,9 +44,9 @@ export class LightRaycaster {
 				return;
 			}
 			const rect = this.o.canvas.getBoundingClientRect();
-            const mouse: Point = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
-			let at: Point;
-			let dir: Point;
+            const mouse: Vec2 = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+			let at: Vec2;
+			let dir: Vec2;
 			if (this.fixedAt == null) {
                 at = mouse;
 				dir = { x: 1, y: 0 };
@@ -53,6 +57,7 @@ export class LightRaycaster {
 					y: mouse.y - this.fixedAt.y,
 				});
 			}
+			this.transformedCurves = this.o.getTransformedCurves();
 			const rayCurve = this.ray(at, dir);
 			this.rays = [rayCurve];
 		});
@@ -65,10 +70,10 @@ export class LightRaycaster {
 		}
 	}
 
-	ray(at: Point, dir: Point): Curve {
+	ray(at: Vec2, dir: Vec2): Curve {
 		const step = 2;
 		const maxLength = 5000;
-		const points: Point[] = [];
+		const points: Vec2[] = [];
 
 		let curMedium = this.getMediumAt(at);
 
@@ -120,12 +125,12 @@ export class LightRaycaster {
 		return { points, isClosed: false };
 	}
 
-	private findClosestCurve(point: Point): Curve | null {
+	private findClosestCurve(point: Vec2): Curve | null {
 		let closestCurve: Curve | null = null;
 		let minDistance = Infinity;
-		for (const curve of this.o.history) {
+		for (const curve of this.transformedCurves) {
 			for (const p of curve.points) {
-				const dist = distanceBetween(point, p);
+				const dist = distance(point, p);
 				if (dist < minDistance) {
 					minDistance = dist;
 					closestCurve = curve;
@@ -135,23 +140,23 @@ export class LightRaycaster {
 		return closestCurve;
 	}
 
-	private findReasonableNormal(point: Point, curve: Curve): Point {
-		// Find the closest point on the curve to the given point
-		let closestPoint: Point | null = null;
+	private findReasonableNormal(point: Vec2, curve: Curve): Vec2 {
+		// Find the closest Vec2 on the curve to the given Vec2
+		let closestVec2: Vec2 | null = null;
 		let minDistance = Infinity;
 		for (const p of curve.points) {
-			const dist = distanceBetween(point, p);
+			const dist = distance(point, p);
 			if (dist < minDistance) {
 				minDistance = dist;
-				closestPoint = p;
+				closestVec2 = p;
 			}
 		}
-		if (!closestPoint) {
+		if (!closestVec2) {
 			return { x: 0, y: 0 };
 		}
 
 		// Approximate tangent by looking at neighboring points
-		const index = curve.points.indexOf(closestPoint);
+		const index = curve.points.indexOf(closestVec2);
 		const prevIndex = (index - 1 + curve.points.length) % curve.points.length;
 		const nextIndex = (index + 1) % curve.points.length;
 
@@ -164,22 +169,22 @@ export class LightRaycaster {
 		return normalize(normal);
 	}
 
-	private getMediumAt(point: Point): number {
+	private getMediumAt(point: Vec2): number {
 		return 1 + this.getCurveCountContaining(point) * 0.3;
 	}
 
-	private getCurveCountContaining(point: Point): number {
+	private getCurveCountContaining(point: Vec2): number {
 		let count = 0;
-		for (const curve of this.o.history) {
-			if (this.isPointInCurve(point, curve)) {
+		for (const curve of this.transformedCurves) {
+			if (this.isVec2InCurve(point, curve)) {
 				count++;
 			}
 		}
 		return count;
 	}
 
-	private isPointInCurve(point: Point, curve: Curve): boolean {
-		// Ray-casting algorithm to determine if point is in polygon
+	private isVec2InCurve(point: Vec2, curve: Curve): boolean {
+		// Ray-casting algorithm to determine if Vec2 is in polygon
 		let inside = false;
 		const n = curve.points.length;
 		for (let i = 0, j = n - 1; i < n; j = i++) {
