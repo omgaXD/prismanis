@@ -147,7 +147,7 @@ export class Scene {
 
 	isPointInbounds(point: Vec2): boolean {
 		if (point.x < 0 || point.y < 0) return false;
-		if (point.x > 1920 || point.y > 1080) return false;
+		if (point.x > window.innerWidth || point.y > window.innerHeight) return false;
 		return true;
 	}
 
