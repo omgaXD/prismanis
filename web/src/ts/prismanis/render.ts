@@ -45,7 +45,7 @@ export class Renderer {
 
 	drawScene(scene: Scene, paint: Paint, lightRaycaster: LightRaycaster) {
 		this.clear();
-		scene.objects.forEach((obj) => {
+		scene.getObjects().forEach((obj) => {
 			if (obj.type === "curve") {
 				drawCurveObject(this.ctx, obj);
 			}
@@ -184,13 +184,13 @@ export function drawCurveObject(ctx: CanvasRenderingContext2D, curveObj: SceneCu
 	ctx.fill();
 	ctx.stroke();
 
-	ctx.fillStyle = "#ff0000";
-	for (let i = 0; i < curve.points.length; i++) {
-		const p = curve.points[i];
-		ctx.beginPath();
-		ctx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
-		ctx.fill();
-	}
+	// ctx.fillStyle = "#ff0000";
+	// for (let i = 0; i < curve.points.length; i++) {
+	// 	const p = curve.points[i];
+	// 	ctx.beginPath();
+	// 	ctx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
+	// 	ctx.fill();
+	// }
 	ctx.restore();
 }
 
