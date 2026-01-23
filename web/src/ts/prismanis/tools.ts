@@ -1,36 +1,4 @@
-import { Curve, Paint } from "./painting";
-import { LightRaycaster } from "./light";
 import { Scene } from "./scene";
-import { TransformTool } from "./transformTool";
-import { ToolHelper } from "./render";
-
-export function initPaintTools(hlp: ToolHelper, onClosed: (curve: Curve) => void) {
-	const paint = new Paint({
-		closedDistanceThreshold: 20,
-		drawingThreshold: 20,
-		hlp,
-		onCurveClosed: onClosed,
-	});
-	paint.init();
-	return paint;
-}
-
-export function initLightRaycaster(hlp: ToolHelper, getTransformedCurves: () => Curve[]) {
-	const lightRaycaster = new LightRaycaster({
-		hlp,
-		getTransformedCurves,
-	});
-	lightRaycaster.init();
-	return lightRaycaster;
-}
-
-export function initTransformTool(hlp: ToolHelper, scene: Scene) {
-	const transformTool = new TransformTool({
-		hlp,
-		scene,
-	});
-	return transformTool;
-}
 
 interface Toggleable {
 	toggle(bool: boolean): void;
@@ -86,11 +54,11 @@ function setupUndoRedoButtons(scene: Scene) {
 	});
 
 	scene.addListener("history-availability-changed", (ev) => {
-		if (ev.which !== 'undo') return;
+		if (ev.which !== "undo") return;
 		undoButton.disabled = !ev.available;
 	});
 	scene.addListener("history-availability-changed", (ev) => {
-		if (ev.which !== 'redo') return;
+		if (ev.which !== "redo") return;
 		redoButton.disabled = !ev.available;
 	});
 

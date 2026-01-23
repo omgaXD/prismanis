@@ -1,5 +1,4 @@
-import { Curve } from "./painting";
-import { Rect, Vec2 } from "./primitives";
+import { Rect, Vec2, Curve } from "./primitives";
 
 type BaseEvent = {};
 

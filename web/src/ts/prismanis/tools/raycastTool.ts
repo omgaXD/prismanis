@@ -1,9 +1,9 @@
-import { Curve } from "./painting";
-import { dist as distance, rotateVec } from "./helpers";
-import { Vec2 } from "./primitives";
-import { ToolHelper } from "./render";
 
-export type LightRaycasterOptions = {
+import { dist as distance, normalizeVec2, rotateVec } from "../helpers";
+import { Curve, Vec2 } from "../primitives";
+import { ToolHelper } from "../render";
+
+export type RaycastToolOptions = {
 	getTransformedCurves: () => Curve[];
 	hlp: ToolHelper;
 	/**
@@ -12,19 +12,15 @@ export type LightRaycasterOptions = {
 	lightSourceAngles?: number[];
 };
 
-function normalize(p: Vec2): Vec2 {
-	const length = Math.hypot(p.x, p.y);
-	if (length === 0) return { x: 0, y: 0 };
-	return { x: p.x / length, y: p.y / length };
-}
-
-export class LightRaycaster {
+export class RaycastTool {
 	enabled: boolean = true;
 	rays: Curve[] = [];
 	fixedAt: Vec2 | null = null;
 	transformedCurves: Curve[] = [];
 
-	constructor(private o: LightRaycasterOptions) {}
+	constructor(private o: RaycastToolOptions) {
+		this.init();
+	}
 
 	init() {
 		this.o.hlp.registerMouseDownListener((ev) => {
@@ -53,7 +49,7 @@ export class LightRaycaster {
 				mainDir = { x: 1, y: 0 };
 			} else {
 				at = this.fixedAt;
-				mainDir = normalize({
+				mainDir = normalizeVec2({
 					x: mouse.x - this.fixedAt.x,
 					y: mouse.y - this.fixedAt.y,
 				});
@@ -137,7 +133,7 @@ export class LightRaycaster {
 						};
 						curMedium = n2;
 					}
-					dir = normalize(dir);
+					dir = normalizeVec2(dir);
 				} else {
 					// Fallback if no curve found (shouldn't happen if medium changed)
 					curMedium = this.getMediumAt(at);
@@ -189,7 +185,7 @@ export class LightRaycaster {
 		};
 		// Normal is perpendicular to tangent
 		const normal = { x: -tangent.y, y: tangent.x };
-		return normalize(normal);
+		return normalizeVec2(normal);
 	}
 
 	private getMediumAt(point: Vec2): number {

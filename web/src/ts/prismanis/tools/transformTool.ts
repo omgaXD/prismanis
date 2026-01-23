@@ -1,6 +1,6 @@
-import { dist, pointInRect } from "./helpers";
-import { ToolHelper } from "./render";
-import { Scene } from "./scene";
+import { dist, pointInRect } from "../helpers";
+import { ToolHelper } from "../render";
+import { Scene } from "../scene";
 
 export type TransformToolOptions = {
 	hlp: ToolHelper;
@@ -26,6 +26,10 @@ export class TransformTool {
 	}
 
 	constructor(private o: TransformToolOptions) {
+		this.init();
+	}
+
+	init() {
 		this.o.hlp.registerMouseDownListener(this.onMouseDown.bind(this));
 		this.o.hlp.registerMouseUpListener(this.onMouseUp.bind(this));
 		this.o.hlp.registerMouseMoveListener(this.onMouseMove.bind(this));

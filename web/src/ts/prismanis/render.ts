@@ -1,6 +1,6 @@
-import { LightRaycaster } from "./light";
-import { Paint, Curve } from "./painting";
-import { Vec2 } from "./primitives";
+import { RaycastTool } from "./tools/raycastTool";
+import { PaintTool } from "./tools/paintTool";
+import { Curve, Vec2 } from "./primitives";
 import { Scene, SceneCurveObject, Transform } from "./scene";
 
 const DEFAULT_THICKNESS = 8;
@@ -43,7 +43,7 @@ export class Renderer {
 		dottedCanvas(this.ctx);
 	}
 
-	drawScene(scene: Scene, paint: Paint, lightRaycaster: LightRaycaster) {
+	drawScene(scene: Scene, paint: PaintTool, lightRaycaster: RaycastTool) {
 		this.clear();
 		scene.getObjects().forEach((obj) => {
 			if (obj.type === "curve") {
@@ -65,7 +65,7 @@ export class Renderer {
 		}
 	}
 
-	setupRender(scene: Scene, paint: Paint, lightRaycaster: LightRaycaster) {
+	setupRender(scene: Scene, paint: PaintTool, lightRaycaster: RaycastTool) {
 		requestAnimationFrame(() => {
 			this.drawScene(scene, paint, lightRaycaster);
 			this.setupRender(scene, paint, lightRaycaster);
@@ -96,7 +96,6 @@ export class Renderer {
 			},
 			registerMouseLeaveListener: (listener: (ev: MouseEvent) => void) => {
 				this.canvas.addEventListener("pointerleave", listener);
-
 			},
 		};
 	}

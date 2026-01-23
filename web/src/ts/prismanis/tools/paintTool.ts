@@ -1,33 +1,21 @@
-import { dist } from "./helpers";
-import { Vec2 } from "./primitives";
-import { ToolHelper } from "./render";
-import { SceneCurveObject } from "./scene";
+import { dist } from "../helpers";
+import { Curve } from "../primitives";
+import { ToolHelper } from "../render";
 
-export type Curve = {
-	points: Vec2[];
-	isClosed: boolean;
-	thickness?: number;
-	color?: string;
-};
-
-const DEFAULT_DRAWING_THRESHOLD = 20;
-
-export type PaintOptions = {
+export type PaintToolOptions = {
 	closedDistanceThreshold: number;
 	drawingThreshold: number;
 	hlp: ToolHelper;
 	onCurveClosed?: (curve: Curve) => void;
 };
 
-export class Paint {
+export class PaintTool {
 	cur: Curve | null = null;
 
 	enabled: boolean = true;
 
-	constructor(private o: PaintOptions) {
-		if (!this.o.drawingThreshold) {
-			this.o.drawingThreshold = DEFAULT_DRAWING_THRESHOLD;
-		}
+	constructor(private o: PaintToolOptions) {
+		this.init();
 	}
 
 	init() {
@@ -78,10 +66,10 @@ export class Paint {
 			this.cur.points.push(point);
 			return;
 		}
-		
+
 		const lastPoint = this.cur.points[this.cur.points.length - 1];
 		const distance = dist(lastPoint, point);
-		
+
 		if (distance > this.o.drawingThreshold) {
 			// Interpolate points between lastPoint and point
 			const numSegments = Math.ceil(distance / this.o.drawingThreshold);
@@ -161,5 +149,4 @@ function recognizeCurveClosedness(curve: Curve, threshold: number): void {
 		curve.isClosed = true;
 		return;
 	}
-
 }
