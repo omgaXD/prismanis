@@ -112,7 +112,6 @@ function recognizeCurveClosedness(curve: Curve, threshold: number): void {
 	// Step 1: naive - check if last and first point are within threshold
 	if (dist(last, first) <= threshold) {
 		curve.isClosed = true;
-		console.log("Curve closed: Step 1 (naive)");
 		return;
 	}
 
@@ -122,7 +121,6 @@ function recognizeCurveClosedness(curve: Curve, threshold: number): void {
 		if (dist(curve.points[i], first) <= threshold) {
 			curve.points = curve.points.slice(0, i + 1);
 			curve.isClosed = true;
-			console.log("Curve closed: Step 2 (early closing)");
 			return;
 		}
 	}
@@ -132,7 +130,6 @@ function recognizeCurveClosedness(curve: Curve, threshold: number): void {
 		if (dist(curve.points[i], last) <= threshold) {
 			curve.points = curve.points.slice(i);
 			curve.isClosed = true;
-			console.log("Curve closed: Step 3 (closing elsewhere)");
 			return;
 		}
 	}
@@ -166,12 +163,9 @@ function recognizeCurveClosedness(curve: Curve, threshold: number): void {
 	if (bestI >= 0 && bestJ >= 0) {
 		curve.points = curve.points.slice(bestI, bestJ + 1);
 		curve.isClosed = true;
-		console.log("Curve closed: Step 4 (massive intersection)");
 		return;
 	}
 
-	// Step 5: give up - don't close the curve
-	console.log("Curve not closed: Step 5 (give up)");
 }
 
 export function drawCurveObject(ctx: CanvasRenderingContext2D, curveObj: SceneCurveObject) {
