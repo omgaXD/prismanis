@@ -39,6 +39,32 @@ function setupRender(paint: Paint, lightRaycaster: LightRaycaster) {
 	requestAnimationFrame(renderScene);
 }
 
+function drawRotationHandle(ctx: CanvasRenderingContext2D, obj: Transform) {
+	const rect = obj.getCorners();
+	const centerTop = {
+		x: (rect.tl.x + rect.tr.x) / 2,
+		y: (rect.tl.y + rect.tr.y) / 2,
+	};
+	const handlePos = {
+		x: centerTop.x + 30 * Math.sin(obj.getRotation()),
+		y: centerTop.y + -30 * Math.cos(obj.getRotation()),
+	};
+
+	ctx.save();
+	ctx.strokeStyle = "#ff8888";
+	ctx.lineWidth = 4;
+	ctx.beginPath();
+	ctx.moveTo(centerTop.x, centerTop.y);
+	ctx.lineTo(handlePos.x, handlePos.y);
+	ctx.stroke();
+
+	ctx.fillStyle = "#ff8888";
+	ctx.beginPath();
+	ctx.arc(handlePos.x, handlePos.y, 8, 0, 2 * Math.PI);
+	ctx.fill();
+	ctx.restore();
+}
+
 function drawSelectionAround(ctx: CanvasRenderingContext2D, obj: Transform) {
 	const rect = obj.getCorners();
 	ctx.save();
@@ -52,6 +78,8 @@ function drawSelectionAround(ctx: CanvasRenderingContext2D, obj: Transform) {
 	ctx.closePath();
 	ctx.stroke();
 	ctx.restore();
+
+	drawRotationHandle(ctx, obj);
 }
 
 function dottedCanvas(ctx: CanvasRenderingContext2D) {

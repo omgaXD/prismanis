@@ -128,7 +128,7 @@ export class Transform {
 	/** transform origin (tries to be the center) */
 	private pos: Vec2;
 	private size: Vec2;
-	/** rotation around the transform origin */
+	/** rotation around the transform origin, radians */
 	private rot: number;
 	/** scale applied to the transform */
 	private scale: Vec2;
@@ -158,9 +158,8 @@ export class Transform {
 	 * Returns the top-left corner of the rotated bounding rect
 	 */
 	getCorners(): { tl: Vec2; tr: Vec2; br: Vec2; bl: Vec2 } {
-		const rad = (this.rot * Math.PI) / 180;
-		const cos = Math.cos(rad);
-		const sin = Math.sin(rad);
+		const cos = Math.cos(this.rot);
+		const sin = Math.sin(this.rot);
 
 		const hw = (this.size.x / 2) * this.scale.x;
 		const hh = (this.size.y / 2) * this.scale.y;
@@ -253,9 +252,8 @@ export class Transform {
 	}
 
     apply(point: Vec2): Vec2 {
-        const rad = (this.rot * Math.PI) / 180;
-        const cos = Math.cos(rad);
-        const sin = Math.sin(rad);
+        const cos = Math.cos(this.rot);
+        const sin = Math.sin(this.rot);
 
         // Scale
         let x = point.x * this.scale.x;
