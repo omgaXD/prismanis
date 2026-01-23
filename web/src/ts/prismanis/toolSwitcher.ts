@@ -33,9 +33,9 @@ export function setupToolSwitcher(paint: Paint, lightRaycaster: LightRaycaster) 
     });
 }
 
-export function setupClearButton(paint: Paint) {
+export function setupClearButton(scene: Scene) {
     const clearButton = document.getElementById("clear-btn") as HTMLButtonElement;
     clearButton.addEventListener("click", () => {
-        paint.clear();
+        scene.clear();
     });
 }

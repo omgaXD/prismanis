@@ -73,6 +73,6 @@ if (ctx) {
 	const lightRaycaster = initLightRaycaster(canvas, () => getTransformedCurvesFromScene(currentScene));
 
 	setupToolSwitcher(paint, lightRaycaster);
-	setupClearButton(paint);
+	setupClearButton(currentScene);
 	setupRender(paint, lightRaycaster);
 }

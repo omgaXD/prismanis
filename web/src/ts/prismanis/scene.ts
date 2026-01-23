@@ -46,6 +46,11 @@ export class Scene {
 			this.selectedObjectIds.push(objectId);
 		}
 	}
+
+    clear() {
+        this.objects.length = 0;
+        this.selectedObjectIds.length = 0;
+    }
 }
 
 export function curveAdderFactory(scene: Scene) {
