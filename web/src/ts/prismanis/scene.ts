@@ -253,9 +253,14 @@ export class Scene {
 		switch (action.type) {
 			case "add":
 				this.objects = this.objects.filter((obj) => obj.id !== action.object.id);
+				this.notifySceneObjectChanged([], [action.object.id]);
 				break;
 			case "remove":
 				this.objects.push(...action.objects);
+				this.notifySceneObjectChanged(
+					action.objects.map((o) => o.id),
+					[],
+				);
 				break;
 			case "transform":
 				for (const affected of action.affectedObjects) {
@@ -284,9 +289,11 @@ export class Scene {
 		switch (action.type) {
 			case "add":
 				this.objects.push(action.object);
+				this.notifySceneObjectChanged([action.object.id], []);
 				break;
 			case "remove":
 				this.objects = this.objects.filter((obj) => !action.objects.some((o) => o.id === obj.id));
+				this.notifySceneObjectChanged([], action.objects.map((o) => o.id));
 				break;
 			case "transform":
 				for (const affected of action.affectedObjects) {
