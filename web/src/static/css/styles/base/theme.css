@@ -20,8 +20,8 @@
     }
 
     .default {
-        border: 1px solid var(--color-stone-600);
         background-color: var(--color-stone-800);
+        border: 1px solid var(--color-stone-600);
         color: var(--color-stone-200);
 
         &:has(:checked) {
@@ -31,9 +31,21 @@
         }
     }
 
+    .warning {
+        background-color: var(--color-yellow-900);
+        border: 1px solid var(--color-yellow-600);
+        color: var(--color-yellow-50);
+
+        &:has(:checked) {
+            background-color: var(--color-yellow-700);
+            border-color: var(--color-yellow-300);
+            color: var(--color-white);
+        }
+    }
+
     .danger {
-        border: 1px solid var(--color-red-900);
         background-color: var(--color-red-950);
+        border: 1px solid var(--color-red-900);
         color: var(--color-red-50);
 
         &:has(:checked) {

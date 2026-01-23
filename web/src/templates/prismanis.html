@@ -3,19 +3,25 @@
     <canvas id="canvas"></canvas>
     <div class="toolbox absolute top-2 left-2 flex flex-col gap-2">
         <label class="icon-btn default">
-            <i class="las la-paint-brush"></i>
-            <input type="radio" value="toggle-draw" name="tool" class="sr-only" checked />
-        </label>
-        <label class="icon-btn default">
-            <i class="las la-lightbulb"></i>
-            <input type="radio" value="toggle-light-source" name="tool" class="sr-only" />
-        </label>
-        <label class="icon-btn default">
             <i class="las la-mouse-pointer"></i>
             <input type="radio" value="toggle-transform" name="tool" class="sr-only" />
         </label>
+        <label class="icon-btn default">
+            <i class="las la-paint-brush"></i>
+            <input type="radio" value="toggle-draw" name="tool" class="sr-only" checked />
+        </label>
+        <label class="icon-btn warning">
+            <i class="las la-lightbulb"></i>
+            <input type="radio" value="toggle-light-source" name="tool" class="sr-only" />
+        </label>
         <button class="icon-btn danger" id="clear-btn">
             <i class="las la-trash"></i>
+        </button>
+        <button class="icon-btn default" id="undo-btn">
+            <i class="las la-undo"></i>
+        </button>
+        <button class="icon-btn default" id="redo-btn">
+            <i class="las la-redo"></i>
         </button>
     </div>
 </div>
