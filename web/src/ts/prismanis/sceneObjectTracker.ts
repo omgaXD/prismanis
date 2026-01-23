@@ -1,6 +1,7 @@
 import { Scene, SceneObject } from "./scene";
 
 const sceneObjectsDiv = document.getElementById("scene-objects") as HTMLDivElement;
+const pointCountSpan = document.getElementById("point-count") as HTMLSpanElement;
 
 export function trackSceneObjects(scene: Scene, switchToTransformTool: () => void) {
 	function addSceneObject(obj: SceneObject) {
@@ -69,5 +70,22 @@ export function trackSceneObjects(scene: Scene, switchToTransformTool: () => voi
 			removeSceneObject(removedId);
 		}
         updateSceneObjectSelectionStates();
+		updatePointCount();
 	});
+
+	function updatePointCount() {
+		let totalPoints = 0;
+		for (const obj of scene.getObjects()) {
+			if (obj.type === "curve") {
+				totalPoints += obj.curve.points.length;
+			}
+		}
+		if (totalPoints < 1000) {
+		} else if (totalPoints < 2500) {
+			pointCountSpan.classList.add("warning-text");
+		} else {
+			pointCountSpan.classList.add("danger-text");
+		}
+		pointCountSpan.textContent = totalPoints.toString();
+	}
 }
