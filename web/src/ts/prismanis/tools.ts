@@ -2,6 +2,7 @@ import { Scene } from "./scene";
 import { ToolSettingNumber, ToolSettingSelect, ToolSettingSlider } from "./toolSettings";
 import { AbstractTool, registeredTools } from "./tools/tool";
 
+const toolNameElem = document.getElementById("tool-name") as HTMLHeadingElement;
 const toolDescriptionElem = document.getElementById("tool-description") as HTMLParagraphElement;
 const toolOptionsElem = document.getElementById("tool-options") as HTMLDivElement;
 
@@ -33,11 +34,12 @@ export function switchToTool(tool: AbstractTool, currentScene: Scene) {
 		currentScene.deselect();
 	}
 
-	// just in case, also set radio button
+	// just in case, also set the radio button
 	const toolRadioInputs = document.querySelector(`input[name="tool"][value="toggle-${tool.id}"]`) as HTMLInputElement;
 	toolRadioInputs.checked = true;
 	
 
+	toolNameElem.textContent = tool.displayName;
 	toolDescriptionElem.textContent = tool.displayDescription;
 	toolOptionsElem.innerHTML = "";
 
