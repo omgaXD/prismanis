@@ -73,6 +73,11 @@ func main() {
 	fs := http.FileServer(http.Dir(config.WebRoot))
 	http.Handle("/static/", fs)
 
+	// Favicon
+	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/static/assets/img/favicon.ico", http.StatusMovedPermanently)
+	})
+
 	// Serve built assets in production
 	if !config.IsDev {
 		http.Handle("/assets/", fs) // Vite builds to /assets inside outDir
