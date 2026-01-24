@@ -5,11 +5,7 @@ npm install
 
 # Run development server
 ```
-npm run dev
-```
-in another terminal:
-```
-go run backend/main.go
+npm start
 ```
 
 # Build for production
