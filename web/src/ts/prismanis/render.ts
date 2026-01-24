@@ -414,10 +414,11 @@ function drawRays(ctx: CanvasRenderingContext2D, rays: RaycastRay[]) {
 function drawSelectionRect(ctx: CanvasRenderingContext2D, rect: Rect) {
 	ctx.save();
 	ctx.strokeStyle = "#8888ff";
-	ctx.lineWidth = 8;
-	ctx.setLineDash([5, 5]);
+	ctx.fillStyle = "#8888ff33";
+	ctx.lineWidth = 6;
 	ctx.beginPath();
 	ctx.rect(rect.x, rect.y, rect.width, rect.height);
 	ctx.stroke();
+	ctx.fill();
 	ctx.restore();
 }
