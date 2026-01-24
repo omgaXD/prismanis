@@ -37,18 +37,18 @@ export class Scene {
 		this.objects = [];
 		this.selectedObjectIds = [];
 
-		// // For testing purposes, add a lens
-		// const testLens: Lens = {
-		// 	r1: 500,
-		// 	r2: -250,
-		// 	middleExtraThickness: 100,
-		// };
-		// const height = 400;
-		// try {
-		// 	lensAdderFactory(this)(testLens, { x: 300, y: 400 }, height);
-		// } catch (e) {
-		// 	console.error("Failed to add test lens:", e);
-		// }
+		// For testing purposes, add a lens
+		const testLens: Lens = {
+			r1: -500,
+			r2: 300,
+			middleExtraThickness: 100,
+		};
+		const height = 400;
+		try {
+			lensAdderFactory(this)(testLens, { x: 300, y: 400 }, height);
+		} catch (e) {
+			console.error("Failed to add test lens:", e);
+		}
 	}
 
 	addListener<K extends keyof EventMap>(type: K, listener: (event: EventMap[K]) => void) {

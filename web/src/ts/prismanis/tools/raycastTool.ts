@@ -1,5 +1,5 @@
 import { dist as distance, normalizeVec2, rotateVec, TransformedCurve } from "../helpers";
-import { calculateWidth } from "../lensHelpers";
+import { calculateWidth, intersectLensWith } from "../lensHelpers";
 import { AIR_MATERIAL, Material } from "../material";
 import { Curve, Vec2 } from "../primitives";
 import { ToolHelper } from "../render";
@@ -20,6 +20,10 @@ export type RayOptions = {
 	 * radians. 0 for right. counter-clockwise.
 	 */
 	initialAngle: number;
+	/**
+	 * applied before rotation
+	 */
+	startPosOffset?: Vec2;
 };
 
 export type RaycastToolOptions = BaseToolOptions & {
@@ -54,11 +58,34 @@ const LAMP_RAY_CONFIG = Array.from({ length: 360 }, (_, i) => {
 	return { wavelength: 600, opacity: 0.08, initialAngle: angle };
 });
 
+const FLOOD_LIGHT = Array.from({ length: 81 }, (_, i) => {
+	// no spread, but starting offset
+	const offsetY = (i - 40) * 3;
+	return { wavelength: 600, opacity: 0.05, initialAngle: 0, startPosOffset: { x: 0, y: offsetY } };
+});
+
+const FLOOD_SUNLIGHT = Array.from({ length: 41 }, (_, i) => {
+	const offsetY = (i - 20) * 1;
+	return [{ wavelength: 380, opacity: 0.4* 0.05, initialAngle: 0, startPosOffset: { x: 0, y: offsetY } },
+		{ wavelength: 420, opacity: 0.4* 0.12, initialAngle: 0, startPosOffset: { x: 0, y: offsetY } },
+		{ wavelength: 460, opacity: 0.4* 0.18, initialAngle: 0, startPosOffset: { x: 0, y: offsetY } },
+		{ wavelength: 500, opacity: 0.4* 0.2, initialAngle: 0, startPosOffset: { x: 0, y: offsetY } },
+		{ wavelength: 540, opacity: 0.4* 0.196, initialAngle: 0, startPosOffset: { x: 0, y: offsetY } },
+		{ wavelength: 580, opacity: 0.4* 0.17, initialAngle: 0, startPosOffset: { x: 0, y: offsetY } },
+		{ wavelength: 620, opacity: 0.4* 0.12, initialAngle: 0, startPosOffset: { x: 0, y: offsetY } },
+		{ wavelength: 660, opacity: 0.4* 0.07, initialAngle: 0, startPosOffset: { x: 0, y: offsetY } },
+		{ wavelength: 700, opacity: 0.4* 0.036, initialAngle: 0, startPosOffset: { x: 0, y: offsetY } },
+		{ wavelength: 740, opacity: 0.4* 0.01, initialAngle: 0, startPosOffset: { x: 0, y: offsetY } }];
+}).flat();
+
+
 const configs = {
 	sunlight: SUNLIGHT_RAY_CONFIG,
 	laser: LASER_RAY_CONFIG,
-	flaslight: FLASHLIGHT_RAY_CONFIG,
+	flashlight: FLASHLIGHT_RAY_CONFIG,
 	lamp: LAMP_RAY_CONFIG,
+	floodlight: FLOOD_LIGHT,
+	floodsunlight: FLOOD_SUNLIGHT,
 };
 
 export type RaycastRay = Curve & {
@@ -114,11 +141,22 @@ export class RaycastTool extends AbstractTool {
 			this.rays = [];
 
 			for (const o of this.rayConfig) {
+				let customAt = {... at};
+				if (o.startPosOffset) {
+					// Usually dir is facing {1, 0}; in that situation, offset is applied directly
+					// but if dir is rotated, offset needs to be rotated as well
+					const offsetRotated = rotateVec(o.startPosOffset, Math.atan2(mainDir.y, mainDir.x));
+					customAt = {
+						x: at.x + offsetRotated.x,
+						y: at.y + offsetRotated.y,
+					};
+				}
+
 				const dir = {
 					x: rotateVec(mainDir, o.initialAngle).x,
 					y: rotateVec(mainDir, o.initialAngle).y,
 				};
-				const ray = this.ray(at, dir, o);
+				const ray = this.ray(customAt, dir, o);
 				this.rays.push(ray);
 			}
 		});
@@ -137,8 +175,10 @@ export class RaycastTool extends AbstractTool {
 				options: [
 					{ value: "sunlight", displayName: "Sunlight" },
 					{ value: "laser", displayName: "Simple Laser" },
-					{ value: "flaslight", displayName: "Flashlight" },
+					{ value: "flashlight", displayName: "Flashlight" },
 					{ value: "lamp", displayName: "Lamp" },
+					{ value: "floodlight", displayName: "Flood Light" },
+					{ value: "floodsunlight", displayName: "Flood Sunlight" },
 				],
 				default: "sunlight",
 				value: "sunlight",
@@ -305,115 +345,10 @@ export class RaycastTool extends AbstractTool {
 				}
 			}
 		} else if (obj.type == "lens") {
-			type Circle = { center: Vec2; radius: number };
-			const circles: Circle[] = [];
-			const height = obj.transform.getSize().y;
-			const thick = obj.lens.middleExtraThickness;
-			const pos = obj.transform.getPosition();
-			const rot = obj.transform.getRotation();
-
-			const { leftArc, rightArc } = calculateWidth(obj.lens, height);
-
-			// Left arc circle
-			const leftCenterLocal: Vec2 = {
-				x: -thick / 2 + (obj.lens.r1 >= 0 ? obj.lens.r1 - leftArc : -obj.lens.r1 + leftArc),
-				y: 0,
-			};
-			const leftCenterWorld = {
-				x: pos.x + (Math.cos(rot) * leftCenterLocal.x - Math.sin(rot) * leftCenterLocal.y),
-				y: pos.y + (Math.sin(rot) * leftCenterLocal.x + Math.cos(rot) * leftCenterLocal.y),
-			};
-			circles.push({ center: leftCenterWorld, radius: Math.abs(obj.lens.r1) });
-
-			// Right arc circle
-			const rightCenterLocal: Vec2 = {
-				x: thick / 2 + (obj.lens.r2 >= 0 ? -obj.lens.r2 + rightArc : obj.lens.r2 - rightArc),
-				y: 0,
-			};
-			const rightCenterWorld = {
-				x: pos.x + (Math.cos(rot) * rightCenterLocal.x - Math.sin(rot) * rightCenterLocal.y),
-				y: pos.y + (Math.sin(rot) * rightCenterLocal.x + Math.cos(rot) * rightCenterLocal.y),
-			};
-			circles.push({ center: rightCenterWorld, radius: Math.abs(obj.lens.r2) });
-
-			// Check ray-circle intersections
-			for (const circle of circles) {
-				const f: Vec2 = { x: at.x - circle.center.x, y: at.y - circle.center.y };
-
-				const a = dir.x * dir.x + dir.y * dir.y;
-				const b = 2 * (f.x * dir.x + f.y * dir.y);
-				const c = f.x * f.x + f.y * f.y - circle.radius * circle.radius;
-
-				const discriminant = b * b - 4 * a * c;
-				if (discriminant < 0) {
-					continue; // No intersection
-				}
-
-				const sqrtDiscriminant = Math.sqrt(discriminant);
-				const t1 = (-b - sqrtDiscriminant) / (2 * a);
-				const t2 = (-b + sqrtDiscriminant) / (2 * a);
-
-				if (t1 >= 0 && t1 < minPosLambda) {
-					minPosLambda = t1;
-					// Calculate normal at intersection point
-					const intersectionPoint = {
-						x: at.x + dir.x * t1,
-						y: at.y + dir.y * t1,
-					};
-					normal = normalizeVec2({
-						x: intersectionPoint.x - circle.center.x,
-						y: intersectionPoint.y - circle.center.y,
-					});
-				}
-				if (t2 >= 0 && t2 < minPosLambda) {
-					minPosLambda = t2;
-					// Calculate normal at intersection point
-					const intersectionPoint = {
-						x: at.x + dir.x * t2,
-						y: at.y + dir.y * t2,
-					};
-					normal = normalizeVec2({
-						x: intersectionPoint.x - circle.center.x,
-						y: intersectionPoint.y - circle.center.y,
-					});
-				}
-			}
-
-			// Check line segment intersections (top and bottom edges)
-			const halfHeight = height / 2;
-			const topLeftLocal: Vec2 = { x: -thick / 2, y: -halfHeight };
-			const topRightLocal: Vec2 = { x: thick / 2, y: -halfHeight };
-			const bottomLeftLocal: Vec2 = { x: -thick / 2, y: halfHeight };
-			const bottomRightLocal: Vec2 = { x: thick / 2, y: halfHeight };
-
-			const cornersWorld = [topLeftLocal, topRightLocal, bottomRightLocal, bottomLeftLocal].map((local) => ({
-				x: pos.x + (Math.cos(rot) * local.x - Math.sin(rot) * local.y),
-				y: pos.y + (Math.sin(rot) * local.x + Math.cos(rot) * local.y),
-			}));
-
-			const edges = [
-				[cornersWorld[0], cornersWorld[1]], // Top edge
-				[cornersWorld[1], cornersWorld[2]], // Right edge
-				[cornersWorld[2], cornersWorld[3]], // Bottom edge
-				[cornersWorld[3], cornersWorld[0]], // Left edge
-			];
-
-			for (const [p1, p2] of edges) {
-				const denom = (p2.y - p1.y) * dir.x - (p2.x - p1.x) * dir.y;
-				if (denom === 0) {
-					continue; // Parallel lines
-				}
-				const t = ((p2.x - p1.x) * (at.y - p1.y) - (p2.y - p1.y) * (at.x - p1.x)) / denom;
-				const u = ((at.x - p1.x) * dir.y - (at.y - p1.y) * dir.x) / denom;
-
-				if (t >= 0 && u >= 0 && u <= 1) {
-					if (t < minPosLambda) {
-						minPosLambda = t;
-						// Calculate normal (normalized)
-						const edgeDir = { x: p2.x - p1.x, y: p2.y - p1.y };
-						normal = normalizeVec2({ x: -edgeDir.y, y: edgeDir.x });
-					}
-				}
+			const {lambda, normal: candidateNormal} = intersectLensWith(at, dir, obj) ?? {lambda: Infinity, normal: {x:0,y:0}};
+			if (lambda < minPosLambda) {
+				minPosLambda = lambda;
+				normal = candidateNormal;
 			}
 		}
 		return { lambda: minPosLambda, normal, material: obj.material, id: obj.id };
