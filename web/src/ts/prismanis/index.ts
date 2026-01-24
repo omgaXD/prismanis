@@ -1,4 +1,4 @@
-import { curveAdderFactory, Scene } from "./scene";
+import { curveAdderFactory, lensAdderFactory, Scene } from "./scene";
 import { setupTools, switchToTool } from "./tools";
 import { Renderer } from "./render";
 import { getTransformedCurvesFromScene } from "./helpers";
@@ -42,10 +42,11 @@ if (ctx) {
 	const lensTool = registerTool(new LensTool({
 		id: "lens",
 		displayName: "Lens Tool",
-		displayDescription: "Place lenses",
+		displayDescription: "Place lenses. Draw a rectangle and choose the radius for each side.",
 		hlp: renderer.getToolHelper(),
 		scene: currentScene,
 		preservesSelection: true,
+		lensAdder: lensAdderFactory(currentScene),
 	}));
 
 	renderer.setupRender(currentScene);

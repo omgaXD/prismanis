@@ -355,7 +355,8 @@ export function curveAdderFactory(scene: Scene) {
 	};
 }
 
-export function lensAdderFactory(scene: Scene) {
+export type LensAdder = (lens: Lens, position: Vec2, height: number) => SceneLensObject;
+export function lensAdderFactory(scene: Scene): LensAdder {
 	return function (lens: Lens, position: Vec2, height: number) {
 		const { totalWidth, leftArc, rightArc } = calculateWidth(lens, height);
 		console.log(totalWidth, leftArc, rightArc);

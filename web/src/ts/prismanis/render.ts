@@ -5,6 +5,7 @@ import { Scene, SceneCurveObject, SceneLensObject, Transform } from "./scene";
 import { wavelengthToRGB } from "./helpers";
 import { registeredTools } from "./tools/tool";
 import { calculateWidth, calculateArcAngles } from "./lensHelpers";
+import { LensTool, PreviewLens } from "./tools/lensTool";
 
 const DEFAULT_THICKNESS = 8;
 const DEFAULT_STROKE_COLOR = "#ffffff";
@@ -18,6 +19,7 @@ export type ToolHelper = {
 	registerMouseDownListener: (listener: (ev: MouseEvent) => void) => void;
 	registerMouseMoveListener: (listener: (ev: MouseEvent) => void) => void;
 	registerMouseLeaveListener: (listener: (ev: MouseEvent) => void) => void;
+	registerEscapeListener: (listener: () => void) => void;
 };
 
 export class Renderer {
@@ -47,7 +49,7 @@ export class Renderer {
 		dottedCanvas(this.ctx);
 	}
 
-	drawScene(scene: Scene, paint: PaintTool, lightRaycaster: RaycastTool) {
+	drawScene(scene: Scene, paint: PaintTool, lightRaycaster: RaycastTool, lensTool: LensTool) {
 		this.clear();
 		scene.getObjects().forEach((obj) => {
 			if (obj.type === "curve") {
@@ -70,16 +72,26 @@ export class Renderer {
 			const { r, g, b } = wavelengthToRGB(ray.wavelength);
 			drawCurve(this.ctx, ray, `rgba(${r}, ${g}, ${b}, ${ray.opacity})`, true);
 		}
+		if (lensTool.previewLens) {
+			drawLensPreview(this.ctx, lensTool.previewLens);
+		}
 	}
 
 	setupRender(scene: Scene) {
 		const paint = registeredTools.find((t) => t instanceof PaintTool);
 		const lightRaycaster = registeredTools.find((t) => t instanceof RaycastTool);
-		if (!(paint instanceof PaintTool) || !(lightRaycaster instanceof RaycastTool)) {
-			throw new Error("PaintTool or RaycastTool not registered");
+		const lensTool = registeredTools.find((t) => t instanceof LensTool);
+		if (!(paint instanceof PaintTool)) {
+			throw new Error("Paint tool not registered");
+		}
+		if (!(lightRaycaster instanceof RaycastTool)) {
+			throw new Error("Raycast tool not registered");
+		}
+		if (!(lensTool instanceof LensTool)) {
+			throw new Error("Lens tool not registered");
 		}
 		requestAnimationFrame(() => {
-			this.drawScene(scene, paint, lightRaycaster);
+			this.drawScene(scene, paint, lightRaycaster, lensTool);
 			this.setupRender(scene);
 		});
 	}
@@ -109,6 +121,13 @@ export class Renderer {
 			registerMouseLeaveListener: (listener: (ev: MouseEvent) => void) => {
 				this.canvas.addEventListener("pointerleave", listener);
 			},
+			registerEscapeListener: (listener: () => void) => {
+				window.addEventListener("keydown", (ev) => {
+					if (ev.key === "Escape") {
+						listener();
+					}
+				});
+			}
 		};
 	}
 }
@@ -279,6 +298,82 @@ function drawLensObject(ctx: CanvasRenderingContext2D, lensObj: SceneLensObject)
 	ctx.fill();
 	ctx.stroke();
 	ctx.restore();
+}
+
+function drawLensPreview(
+	ctx: CanvasRenderingContext2D,
+	previewLens: PreviewLens,
+) {
+	// equivalent to (-thick/2, height/2)
+	const tl = previewLens.topLeft;
+	// equivalent to (thick/2, -height/2)
+	const br = {
+		x: previewLens.topLeft.x + previewLens.lens.middleExtraThickness,
+		y: previewLens.topLeft.y + previewLens.height,
+	}
+
+	const height = previewLens.height;
+	const lens = previewLens.lens;
+
+	const { leftArc, rightArc } = calculateWidth(lens, height);
+	const heightHalf = height / 2;
+	const small1 = Math.sqrt(lens.r1 * lens.r1 - heightHalf * heightHalf);
+	const small2 = Math.sqrt(lens.r2 * lens.r2 - heightHalf * heightHalf);
+
+	ctx.save();
+	ctx.strokeStyle = "#ffff00";
+	ctx.lineWidth = DEFAULT_THICKNESS;
+
+	ctx.beginPath();
+	ctx.moveTo(tl.x, tl.y);
+
+	if (lens.r1 === Infinity) {
+		ctx.lineTo(tl.x, br.y);
+	} else if (lens.r1 < 0) {
+		ctx.lineTo(tl.x - leftArc, tl.y);
+		ctx.arcTo(
+			(heightHalf * heightHalf / small1) - leftArc + tl.x,
+			tl.y + heightHalf,
+			tl.x - leftArc,
+			br.y,
+			Math.abs(lens.r1),
+		);
+	} else {
+		ctx.arcTo(
+			-(heightHalf * heightHalf / small1) + tl.x,
+			tl.y + heightHalf,
+			tl.x,
+			br.y,
+			Math.abs(lens.r1),
+		);
+	}
+
+	ctx.lineTo(br.x, br.y);
+
+	if (lens.r2 === Infinity) {
+		ctx.lineTo(br.x, tl.y);
+	} else if (lens.r2 < 0) {
+		ctx.lineTo(br.x + rightArc, br.y);
+		ctx.arcTo(
+			-(heightHalf * heightHalf / small2) + br.x + rightArc,
+			tl.y + heightHalf,
+			br.x + rightArc,
+			tl.y,
+			Math.abs(lens.r2),
+		);
+	} else {
+		ctx.arcTo(
+			heightHalf * heightHalf / small2 + br.x,
+			tl.y + heightHalf,
+			br.x,
+			tl.y,
+			Math.abs(lens.r2),
+		);
+	}
+	ctx.closePath();
+	ctx.stroke();
+	ctx.restore();
+
 }
 
 function drawCurve(
