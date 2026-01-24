@@ -1,4 +1,5 @@
-import { Scene, SceneObject } from "./entities/scene";
+import { Scene } from "./entities/scene";
+import { SceneObject } from "./entities/sceneObjects";
 
 const sceneObjectsDiv = document.getElementById("scene-objects") as HTMLDivElement;
 const pointCountSpan = document.getElementById("point-count") as HTMLSpanElement;
