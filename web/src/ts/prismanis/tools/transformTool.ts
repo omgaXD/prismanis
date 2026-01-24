@@ -1,6 +1,6 @@
-import { dist, pointInRect } from "../helpers";
+import { dist, pointInRect } from "../math/geometry";
 import { ToolHelper } from "../render";
-import { Scene } from "../scene";
+import { Scene } from "../entities/scene";
 import { AbstractTool, BaseToolOptions } from "./tool";
 
 export type TransformToolOptions = BaseToolOptions & {
@@ -150,7 +150,7 @@ export class TransformTool extends AbstractTool {
 
 	rotate(event: MouseEvent) {
 		const mousePos = this.o.hlp.mpg(event);
-		
+
 		this.lastMousePos = mousePos;
 
 		const obj = this.o.scene.getObjectById(this.o.scene.selectedObjectIds[0]);
@@ -162,7 +162,7 @@ export class TransformTool extends AbstractTool {
 	}
 	drag(event: MouseEvent) {
 		const mousePos = this.o.hlp.mpg(event);
-		
+
 		const mouseDelta = {
 			x: mousePos.x - this.lastMousePos.x,
 			y: mousePos.y - this.lastMousePos.y,

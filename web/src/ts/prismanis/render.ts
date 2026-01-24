@@ -1,11 +1,14 @@
-import { RaycastTool } from "./tools/raycastTool";
-import { PaintTool } from "./tools/paintTool";
-import { Curve, Vec2 } from "./primitives";
-import { Scene, SceneCurveObject, SceneLensObject, Transform } from "./scene";
-import { wavelengthToRGB } from "./helpers";
-import { registeredTools } from "./tools/tool";
-import { calculateWidth, calculateArcAngles } from "./lensHelpers";
+import { Scene, Transform } from "./entities/scene";
+import { SceneCurveObject, SceneLensObject, SceneLightObject } from "./entities/sceneObjects";
+import { wavelengthToRGB } from "./math/colorPhysics";
+import { calculateWidth } from "./math/lensHelpers";
+import { bake, rays } from "./math/raycasting";
+import { Vec2, Curve } from "./primitives";
 import { LensTool, PreviewLens } from "./tools/lensTool";
+import { PaintTool } from "./tools/paintTool";
+import { RaycastRay, RaycastTool } from "./tools/raycastTool";
+import { registeredTools } from "./tools/tool";
+
 
 const DEFAULT_THICKNESS = 8;
 const DEFAULT_STROKE_COLOR = "#ffffff";
@@ -56,6 +59,10 @@ export class Renderer {
 				drawCurveObject(this.ctx, obj);
 			} else if (obj.type === "lens") {
 				drawLensObject(this.ctx, obj);
+			} else if (obj.type === "light") {
+				const rays = bake(obj, scene);
+				drawLightSourceObj(this.ctx, obj);
+				drawRays(this.ctx, rays);
 			}
 		});
 
@@ -68,10 +75,7 @@ export class Renderer {
 		if (paint.cur) {
 			drawCurve(this.ctx, paint.cur, "#ffff00");
 		}
-		for (const ray of lightRaycaster.rays) {
-			const { r, g, b } = wavelengthToRGB(ray.wavelength);
-			drawCurve(this.ctx, ray, `rgba(${r}, ${g}, ${b}, ${ray.opacity})`, true);
-		}
+		drawRays(this.ctx, lightRaycaster.previewRays);
 		if (lensTool.previewLens) {
 			drawLensPreview(this.ctx, lensTool.previewLens);
 		}
@@ -127,7 +131,7 @@ export class Renderer {
 						listener();
 					}
 				});
-			}
+			},
 		};
 	}
 }
@@ -254,24 +258,17 @@ function drawLensObject(ctx: CanvasRenderingContext2D, lensObj: SceneLensObject)
 	ctx.beginPath();
 	ctx.moveTo(-thick / 2, -height / 2);
 
-
 	if (lens.r1 < 0) {
 		ctx.lineTo(-thick / 2 - leftArc, -height / 2);
 		ctx.arcTo(
-			(heightHalf * heightHalf / small1) - thick / 2 - leftArc,
+			(heightHalf * heightHalf) / small1 - thick / 2 - leftArc,
 			0,
 			-thick / 2 - leftArc,
 			height / 2,
 			Math.abs(lens.r1),
 		);
 	} else {
-		ctx.arcTo(
-			-(heightHalf * heightHalf / small1) - thick / 2,
-			0,
-			-thick / 2,
-			height / 2,
-			Math.abs(lens.r1),
-		);
+		ctx.arcTo(-((heightHalf * heightHalf) / small1) - thick / 2, 0, -thick / 2, height / 2, Math.abs(lens.r1));
 	}
 
 	ctx.lineTo(thick / 2, height / 2);
@@ -279,20 +276,14 @@ function drawLensObject(ctx: CanvasRenderingContext2D, lensObj: SceneLensObject)
 	if (lens.r2 < 0) {
 		ctx.lineTo(thick / 2 + rightArc, height / 2);
 		ctx.arcTo(
-			-(heightHalf * heightHalf / small2) + thick / 2 + rightArc,
+			-((heightHalf * heightHalf) / small2) + thick / 2 + rightArc,
 			0,
 			thick / 2 + rightArc,
 			-height / 2,
 			Math.abs(lens.r2),
 		);
 	} else {
-		ctx.arcTo(
-			heightHalf * heightHalf / small2 + thick / 2,
-			0,
-			thick / 2,
-			-height / 2,
-			Math.abs(lens.r2),
-		);
+		ctx.arcTo((heightHalf * heightHalf) / small2 + thick / 2, 0, thick / 2, -height / 2, Math.abs(lens.r2));
 	}
 	ctx.closePath();
 	ctx.fill();
@@ -300,17 +291,14 @@ function drawLensObject(ctx: CanvasRenderingContext2D, lensObj: SceneLensObject)
 	ctx.restore();
 }
 
-function drawLensPreview(
-	ctx: CanvasRenderingContext2D,
-	previewLens: PreviewLens,
-) {
+function drawLensPreview(ctx: CanvasRenderingContext2D, previewLens: PreviewLens) {
 	// equivalent to (-thick/2, height/2)
 	const tl = previewLens.topLeft;
 	// equivalent to (thick/2, -height/2)
 	const br = {
 		x: previewLens.topLeft.x + previewLens.lens.middleExtraThickness,
 		y: previewLens.topLeft.y + previewLens.height,
-	}
+	};
 
 	const height = previewLens.height;
 	const lens = previewLens.lens;
@@ -332,20 +320,14 @@ function drawLensPreview(
 	} else if (lens.r1 < 0) {
 		ctx.lineTo(tl.x - leftArc, tl.y);
 		ctx.arcTo(
-			(heightHalf * heightHalf / small1) - leftArc + tl.x,
+			(heightHalf * heightHalf) / small1 - leftArc + tl.x,
 			tl.y + heightHalf,
 			tl.x - leftArc,
 			br.y,
 			Math.abs(lens.r1),
 		);
 	} else {
-		ctx.arcTo(
-			-(heightHalf * heightHalf / small1) + tl.x,
-			tl.y + heightHalf,
-			tl.x,
-			br.y,
-			Math.abs(lens.r1),
-		);
+		ctx.arcTo(-((heightHalf * heightHalf) / small1) + tl.x, tl.y + heightHalf, tl.x, br.y, Math.abs(lens.r1));
 	}
 
 	ctx.lineTo(br.x, br.y);
@@ -355,25 +337,18 @@ function drawLensPreview(
 	} else if (lens.r2 < 0) {
 		ctx.lineTo(br.x + rightArc, br.y);
 		ctx.arcTo(
-			-(heightHalf * heightHalf / small2) + br.x + rightArc,
+			-((heightHalf * heightHalf) / small2) + br.x + rightArc,
 			tl.y + heightHalf,
 			br.x + rightArc,
 			tl.y,
 			Math.abs(lens.r2),
 		);
 	} else {
-		ctx.arcTo(
-			heightHalf * heightHalf / small2 + br.x,
-			tl.y + heightHalf,
-			br.x,
-			tl.y,
-			Math.abs(lens.r2),
-		);
+		ctx.arcTo((heightHalf * heightHalf) / small2 + br.x, tl.y + heightHalf, br.x, tl.y, Math.abs(lens.r2));
 	}
 	ctx.closePath();
 	ctx.stroke();
 	ctx.restore();
-
 }
 
 function drawCurve(
@@ -405,4 +380,25 @@ function drawCurve(
 	}
 	ctx.stroke();
 	ctx.restore();
+}
+
+function drawLightSourceObj(ctx: CanvasRenderingContext2D, lightSourceObject: SceneLightObject) {
+	const corners = lightSourceObject.transform.getCorners();
+	ctx.save();
+	ctx.fillStyle = "#ffff00";
+	ctx.beginPath();
+	ctx.moveTo(corners.tl.x, corners.tl.y);
+	ctx.lineTo(corners.tr.x, corners.tr.y);
+	ctx.lineTo(corners.br.x, corners.br.y);
+	ctx.lineTo(corners.bl.x, corners.bl.y);
+	ctx.closePath();
+	ctx.fill();
+	ctx.restore();
+}
+
+function drawRays(ctx: CanvasRenderingContext2D, rays: RaycastRay[]) {
+	for (const ray of rays) {
+		const { r, g, b } = wavelengthToRGB(ray.wavelength);
+		drawCurve(ctx, ray, `rgba(${r}, ${g}, ${b}, ${ray.opacity})`, true);
+	}
 }

@@ -1,7 +1,8 @@
-import { calculateWidth, Lens } from "../lensHelpers";
+import { LensAdder } from "../entities/sceneObjects";
+import { Lens, calculateWidth } from "../math/lensHelpers";
 import { Vec2 } from "../primitives";
 import { ToolHelper } from "../render";
-import { LensAdder, Scene, SceneLensObject, Transform } from "../scene";
+import { Scene } from "../entities/scene";
 import { AbstractTool, BaseToolOptions } from "./tool";
 
 type LensToolOptions = BaseToolOptions & {
@@ -43,11 +44,11 @@ export class LensTool extends AbstractTool {
 		});
 		this.o.hlp.registerMouseDownListener((e) => {
 			if (this.isEnabled() === false) return;
-            if (e.button === 2) {
-                this.state = "idle";
-                this.previewLens = null;
-                return;
-            }
+			if (e.button === 2) {
+				this.state = "idle";
+				this.previewLens = null;
+				return;
+			}
 			if (this.state === "idle") {
 				this.state = "rectangle";
 				this.reasonableDrag = false;

@@ -1,7 +1,7 @@
-import { dist } from "../helpers";
+import { dist } from "../math/geometry";
 import { Curve } from "../primitives";
 import { ToolHelper } from "../render";
-import { ToolSettingNumber, ToolSettingSlider } from "../toolSettings";
+import { ToolSettingSlider } from "../entities/toolSettings";
 import { AbstractTool, BaseToolOptions } from "./tool";
 
 export type PaintToolOptions = BaseToolOptions & {

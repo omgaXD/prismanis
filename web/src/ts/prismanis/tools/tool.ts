@@ -1,4 +1,4 @@
-import { ToolSetting } from "../toolSettings";
+import { ToolSetting } from "../entities/toolSettings";
 
 export type BaseToolOptions = {
 	id: string;

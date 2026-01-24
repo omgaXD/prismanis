@@ -1,6 +1,7 @@
+import { AbstractTool, registeredTools } from "../tools/tool";
 import { Scene } from "./scene";
-import { ToolSettingNumber, ToolSettingSelect, ToolSettingSlider } from "./toolSettings";
-import { AbstractTool, registeredTools } from "./tools/tool";
+import { ToolSettingSelect, ToolSettingNumber, ToolSettingSlider } from "./toolSettings";
+
 
 const toolNameElem = document.getElementById("tool-name") as HTMLHeadingElement;
 const toolDescriptionElem = document.getElementById("tool-description") as HTMLParagraphElement;
@@ -37,7 +38,6 @@ export function switchToTool(tool: AbstractTool, currentScene: Scene) {
 	// just in case, also set the radio button
 	const toolRadioInputs = document.querySelector(`input[name="tool"][value="toggle-${tool.id}"]`) as HTMLInputElement;
 	toolRadioInputs.checked = true;
-	
 
 	toolNameElem.textContent = tool.displayName;
 	toolDescriptionElem.textContent = tool.displayDescription;

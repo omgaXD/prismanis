@@ -1,6 +1,6 @@
-import { normalizeVec2 } from "./helpers";
-import { Vec2 } from "./primitives";
-import { SceneLensObject } from "./scene";
+import { SceneLensObject } from "../entities/sceneObjects";
+import { normalizeVec2 } from "./geometry";
+import { Vec2 } from "../primitives";
 
 export type Lens = {
 	middleExtraThickness: number;

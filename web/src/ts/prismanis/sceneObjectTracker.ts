@@ -1,4 +1,4 @@
-import { Scene, SceneObject } from "./scene";
+import { Scene, SceneObject } from "./entities/scene";
 
 const sceneObjectsDiv = document.getElementById("scene-objects") as HTMLDivElement;
 const pointCountSpan = document.getElementById("point-count") as HTMLSpanElement;
@@ -9,7 +9,7 @@ export function trackSceneObjects(scene: Scene, switchToTransformTool: () => voi
 		objEl.classList.add("select-none", "text-xs", "p-1", "hover:bg-blue-800", "cursor-pointer");
 		objEl.id = `scene-object-${obj.id}`;
 		objEl.addEventListener("click", (ev) => {
-            switchToTransformTool();
+			switchToTransformTool();
 			if (ev.shiftKey) {
 				if (scene.selectedObjectIds.includes(obj.id)) {
 					scene.removeFromSelection(obj.id);
@@ -69,7 +69,7 @@ export function trackSceneObjects(scene: Scene, switchToTransformTool: () => voi
 		for (const removedId of ev.removedObjectIds) {
 			removeSceneObject(removedId);
 		}
-        updateSceneObjectSelectionStates();
+		updateSceneObjectSelectionStates();
 		updatePointCount();
 	});
 

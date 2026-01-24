@@ -1,6 +1,5 @@
-import { calculateWidth, Lens } from "./lensHelpers";
-import { EXAGGERATED_GLASS_MATERIAL, GLASS_MATERIAL, Material } from "./material";
-import { Rect, Vec2, Curve } from "./primitives";
+import { Rect, Vec2 } from "../primitives";
+import { SceneObject } from "./sceneObjects";
 
 type BaseEvent = {};
 
@@ -36,19 +35,6 @@ export class Scene {
 	constructor() {
 		this.objects = [];
 		this.selectedObjectIds = [];
-
-		// For testing purposes, add a lens
-		const testLens: Lens = {
-			r1: -500,
-			r2: 300,
-			middleExtraThickness: 100,
-		};
-		const height = 400;
-		try {
-			lensAdderFactory(this)(testLens, { x: 300, y: 400 }, height);
-		} catch (e) {
-			console.error("Failed to add test lens:", e);
-		}
 	}
 
 	addListener<K extends keyof EventMap>(type: K, listener: (event: EventMap[K]) => void) {
@@ -293,7 +279,10 @@ export class Scene {
 				break;
 			case "remove":
 				this.objects = this.objects.filter((obj) => !action.objects.some((o) => o.id === obj.id));
-				this.notifySceneObjectChanged([], action.objects.map((o) => o.id));
+				this.notifySceneObjectChanged(
+					[],
+					action.objects.map((o) => o.id),
+				);
 				break;
 			case "transform":
 				for (const affected of action.affectedObjects) {
@@ -315,67 +304,6 @@ export class Scene {
 	canRedo() {
 		return this.future.length > 0 && this.historyMutationInProgress === false;
 	}
-}
-
-export function curveAdderFactory(scene: Scene) {
-	return function (curve: Curve) {
-		// Calculate bounding box
-		let minX = Infinity,
-			minY = Infinity,
-			maxX = -Infinity,
-			maxY = -Infinity;
-		for (const point of curve.points) {
-			if (point.x < minX) minX = point.x;
-			if (point.y < minY) minY = point.y;
-			if (point.x > maxX) maxX = point.x;
-			if (point.y > maxY) maxY = point.y;
-		}
-
-		// Alter curve points to be relative to center
-		for (const point of curve.points) {
-			point.x -= (minX + maxX) / 2;
-			point.y -= (minY + maxY) / 2;
-		}
-
-		const transform = new Transform({ x: (minX + maxX) / 2, y: (minY + maxY) / 2 }, 0, {
-			x: maxX - minX,
-			y: maxY - minY,
-		});
-
-		const sceneObject: SceneCurveObject = {
-			id: crypto.randomUUID(),
-			type: "curve",
-			curve: curve,
-			transform: transform,
-			material: EXAGGERATED_GLASS_MATERIAL,
-		};
-
-		scene.add(sceneObject);
-		return sceneObject;
-	};
-}
-
-export type LensAdder = (lens: Lens, position: Vec2, height: number) => SceneLensObject;
-export function lensAdderFactory(scene: Scene): LensAdder {
-	return function (lens: Lens, position: Vec2, height: number) {
-		const { totalWidth, leftArc, rightArc } = calculateWidth(lens, height);
-		console.log(totalWidth, leftArc, rightArc);
-		const transform = new Transform({ x: position.x, y: position.y }, 0, {
-			x: totalWidth,
-			y: height,
-		});
-
-		const sceneObject: SceneLensObject = {
-			id: crypto.randomUUID(),
-			type: "lens",
-			lens: lens,
-			transform: transform,
-			material: EXAGGERATED_GLASS_MATERIAL,
-		};
-
-		scene.add(sceneObject);
-		return sceneObject;
-	};
 }
 
 export type SceneActionBase = {};
@@ -400,25 +328,6 @@ export type SceneTransformObjectAction = SceneActionBase & {
 };
 
 export type SceneAction = SceneAddObjectAction | SceneRemoveObjectAction | SceneTransformObjectAction;
-
-export type SceneObjectBase = {
-	id: string;
-	transform: Transform;
-};
-
-export type SceneCurveObject = SceneObjectBase & {
-	type: "curve";
-	curve: Curve;
-	material: Material;
-};
-
-export type SceneLensObject = SceneObjectBase & {
-	type: "lens";
-	lens: Lens;
-	material: Material;
-};
-
-export type SceneObject = SceneCurveObject | SceneLensObject;
 
 export class Transform {
 	/** transform origin (tries to be the center) */
