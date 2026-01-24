@@ -19,10 +19,19 @@ export type PreviewLens = {
 export class LensTool extends AbstractTool {
 	state: "idle" | "rectangle" | "firstRadius" | "secondRadius" = "idle";
 	previewLens: PreviewLens | null = null;
+	fixedPoint: Vec2 | null = null;
 
 	constructor(private o: LensToolOptions) {
 		super(o);
 		this.init();
+	}
+
+	protected onToggled(enabled: boolean): void {
+		console.log("Lens tool toggled:", enabled);
+		if (enabled === false) {
+			this.state = "idle";
+			this.previewLens = null;
+		}
 	}
 
 	init() {
@@ -40,6 +49,7 @@ export class LensTool extends AbstractTool {
             }
 			if (this.state === "idle") {
 				this.state = "rectangle";
+				this.fixedPoint = this.o.hlp.mpg(e);
 				this.previewLens = {
 					lens: {
 						middleExtraThickness: 0,
@@ -80,10 +90,7 @@ export class LensTool extends AbstractTool {
 			if (this.isEnabled() === false) return;
 
 			if (this.state === "rectangle") {
-				this.previewLens!.height = Math.abs(this.o.hlp.mpg(e).y - this.previewLens!.topLeft.y);
-				this.previewLens!.lens.middleExtraThickness = Math.abs(
-					this.o.hlp.mpg(e).x - this.previewLens!.topLeft.x,
-				);
+				this.adjustPreviewRect(this.o.hlp.mpg(e));
 			} else if (this.state === "firstRadius") {
 				// Update preview for radius 1
 				const r1 = this.getRadius1(this.o.hlp.mpg(e)) ?? Infinity;
@@ -104,6 +111,14 @@ export class LensTool extends AbstractTool {
 			};
 		}
 		return null;
+	}
+
+	private adjustPreviewRect(clickedAt: Vec2) {
+		if (!this.previewLens || !this.fixedPoint) return;
+		this.previewLens.height = Math.abs(clickedAt.y - this.fixedPoint.y);
+		this.previewLens.topLeft.y = Math.min(clickedAt.y, this.fixedPoint.y);
+		this.previewLens.lens.middleExtraThickness = Math.abs(clickedAt.x - this.fixedPoint.x);
+		this.previewLens.topLeft.x = Math.min(clickedAt.x, this.fixedPoint.x);
 	}
 
 	/**
