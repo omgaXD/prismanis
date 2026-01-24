@@ -20,6 +20,7 @@ export class LensTool extends AbstractTool {
 	state: "idle" | "rectangle" | "firstRadius" | "secondRadius" = "idle";
 	previewLens: PreviewLens | null = null;
 	fixedPoint: Vec2 | null = null;
+	reasonableDrag: boolean = false;
 
 	constructor(private o: LensToolOptions) {
 		super(o);
@@ -49,6 +50,7 @@ export class LensTool extends AbstractTool {
             }
 			if (this.state === "idle") {
 				this.state = "rectangle";
+				this.reasonableDrag = false;
 				this.fixedPoint = this.o.hlp.mpg(e);
 				this.previewLens = {
 					lens: {
@@ -59,6 +61,9 @@ export class LensTool extends AbstractTool {
 					height: 0,
 					topLeft: this.o.hlp.mpg(e),
 				};
+			} else if (this.state === "rectangle") {
+				this.adjustPreviewRect(this.o.hlp.mpg(e));
+				this.state = "firstRadius";
 			} else if (this.state === "firstRadius") {
 				const r1 = this.getRadius1(this.o.hlp.mpg(e));
 				if (r1 !== null && this.previewLens) {
@@ -83,12 +88,15 @@ export class LensTool extends AbstractTool {
 			if (this.isEnabled() === false) return;
 
 			if (this.state === "rectangle") {
-				this.state = "firstRadius";
+				if (this.reasonableDrag) {
+					this.state = "firstRadius";
+				} else {
+					// probably user expects to not drag but rather click the corners
+				}
 			}
 		});
 		this.o.hlp.registerMouseMoveListener((e) => {
 			if (this.isEnabled() === false) return;
-
 			if (this.state === "rectangle") {
 				this.adjustPreviewRect(this.o.hlp.mpg(e));
 			} else if (this.state === "firstRadius") {
@@ -119,6 +127,15 @@ export class LensTool extends AbstractTool {
 		this.previewLens.topLeft.y = Math.min(clickedAt.y, this.fixedPoint.y);
 		this.previewLens.lens.middleExtraThickness = Math.abs(clickedAt.x - this.fixedPoint.x);
 		this.previewLens.topLeft.x = Math.min(clickedAt.x, this.fixedPoint.x);
+		if (this.previewLens.lens.middleExtraThickness < 1) {
+			this.previewLens.lens.middleExtraThickness = 1;
+		}
+		if (this.previewLens.height < 1) {
+			this.previewLens.height = 1;
+		}
+		if (this.previewLens.lens.middleExtraThickness > 10 && this.previewLens.height > 10) {
+			this.reasonableDrag = true;
+		}
 	}
 
 	/**
