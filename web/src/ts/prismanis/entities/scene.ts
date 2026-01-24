@@ -421,6 +421,10 @@ export class Transform {
 		this.rot = rot;
 	}
 
+	rotate(deltaRot: number) {
+		this.rot += deltaRot;
+	}
+
 	getSize(): Vec2 {
 		return { x: this.size.x * this.scale.x, y: this.size.y * this.scale.y };
 	}

@@ -3,11 +3,12 @@ import { SceneCurveObject, SceneLensObject, SceneLightObject } from "./entities/
 import { wavelengthToRGB } from "./math/colorPhysics";
 import { calculateWidth } from "./math/lensHelpers";
 import { bake, rays } from "./math/raycasting";
-import { Vec2, Curve } from "./primitives";
+import { Vec2, Curve, Rect } from "./primitives";
 import { LensTool, PreviewLens } from "./tools/lensTool";
 import { PaintTool } from "./tools/paintTool";
 import { RaycastRay, RaycastTool } from "./tools/raycastTool";
 import { registeredTools } from "./tools/tool";
+import { TransformTool } from "./tools/transformTool";
 
 
 const DEFAULT_THICKNESS = 8;
@@ -52,7 +53,7 @@ export class Renderer {
 		dottedCanvas(this.ctx);
 	}
 
-	drawScene(scene: Scene, paint: PaintTool, lightRaycaster: RaycastTool, lensTool: LensTool) {
+	drawScene(scene: Scene, paint: PaintTool, lightRaycaster: RaycastTool, lensTool: LensTool, transformTool: TransformTool) {
 		this.clear();
 		scene.getObjects().forEach((obj) => {
 			if (obj.type === "curve") {
@@ -79,12 +80,16 @@ export class Renderer {
 		if (lensTool.previewLens) {
 			drawLensPreview(this.ctx, lensTool.previewLens);
 		}
+		if (transformTool.selectionRect) {
+			drawSelectionRect(this.ctx, transformTool.selectionRect);
+		}
 	}
 
 	setupRender(scene: Scene) {
 		const paint = registeredTools.find((t) => t instanceof PaintTool);
 		const lightRaycaster = registeredTools.find((t) => t instanceof RaycastTool);
 		const lensTool = registeredTools.find((t) => t instanceof LensTool);
+		const transformTool = registeredTools.find((t) => t instanceof TransformTool);
 		if (!(paint instanceof PaintTool)) {
 			throw new Error("Paint tool not registered");
 		}
@@ -94,10 +99,13 @@ export class Renderer {
 		if (!(lensTool instanceof LensTool)) {
 			throw new Error("Lens tool not registered");
 		}
-		requestAnimationFrame(() => {
-			this.drawScene(scene, paint, lightRaycaster, lensTool);
-			this.setupRender(scene);
-		});
+		function drawLoop(drawScene: typeof Renderer.prototype.drawScene) {
+			requestAnimationFrame(() => {
+				drawScene(scene, paint!, lightRaycaster!, lensTool!, transformTool!);
+				drawLoop(drawScene);
+			});
+		}
+		drawLoop(this.drawScene.bind(this));
 	}
 
 	mousePositionFactory(): MousePositionGetter {
@@ -401,4 +409,15 @@ function drawRays(ctx: CanvasRenderingContext2D, rays: RaycastRay[]) {
 		const { r, g, b } = wavelengthToRGB(ray.wavelength);
 		drawCurve(ctx, ray, `rgba(${r}, ${g}, ${b}, ${ray.opacity})`, true);
 	}
+}
+
+function drawSelectionRect(ctx: CanvasRenderingContext2D, rect: Rect) {
+	ctx.save();
+	ctx.strokeStyle = "#8888ff";
+	ctx.lineWidth = 8;
+	ctx.setLineDash([5, 5]);
+	ctx.beginPath();
+	ctx.rect(rect.x, rect.y, rect.width, rect.height);
+	ctx.stroke();
+	ctx.restore();
 }
