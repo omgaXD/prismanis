@@ -28,6 +28,7 @@ export class AbstractTool {
 
 	toggle(enable: boolean): void {
 		this.enabled = enable;
+		this.onToggled?.(enable);
 	}
 
 	protected onToggled?(enabled: boolean): void;
