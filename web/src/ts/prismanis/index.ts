@@ -29,7 +29,7 @@ if (ctx) {
 		new RaycastTool({
 			id: "raycast",
 			displayName: "Raycast Tool",
-			displayDescription: "Cast rays. Hold left click to fix the ray origin.",
+			displayDescription: "Place light sources. Choose position and direction.",
 			hlp: renderer.getToolHelper(),
 			scene: currentScene,
 			lightSourceAdder: lightSourceAdderFactory(currentScene),
