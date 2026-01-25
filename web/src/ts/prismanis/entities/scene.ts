@@ -24,8 +24,8 @@ type EventMap = {
 };
 
 export class Scene {
-	private objects: SceneObject[];
-	selectedObjectIds: string[];
+	private objects: SceneObject[] = [];
+	selectedObjectIds: string[] = [];
 	past: SceneAction[] = [];
 	future: SceneAction[] = [];
 	historyMutationInProgress: boolean = false;
@@ -33,8 +33,6 @@ export class Scene {
 	private sceneObjectChangedListeners: ((event: SceneObjectEvent) => void)[] = [];
 
 	constructor() {
-		this.objects = [];
-		this.selectedObjectIds = [];
 	}
 
 	addListener<K extends keyof EventMap>(type: K, listener: (event: EventMap[K]) => void) {
