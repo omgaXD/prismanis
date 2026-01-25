@@ -46,7 +46,7 @@
 
     input[type="number"],
     input[type="text"],
-    select {
+    select:not([multiple]) {
         background-color: var(--color-stone-800);
         border: 1px solid var(--color-stone-600);
         color: var(--color-stone-200);
@@ -60,6 +60,22 @@
         }
     }
 
+    select[multiple] {
+        font-size: var(--text-sm);
+        height: auto;
+        max-width: 100%;
+        option {
+            padding: var(--space-2) var(--space-1);
+            &:nth-child(2n) {
+                background-color: var(--color-stone-800);
+            }
+            &:checked {
+                background-color: var(--color-blue-600);
+                color: var(--color-white);
+            }
+        }
+    }
+
     input[type="range"] {
         width: 100%;
         accent-color: var(--color-blue-400);
@@ -70,10 +86,6 @@
         background-color: var(--color-stone-800);
         border-radius: var(--radius-lg);
         padding: calc(--space-4);
-    }
-
-    .selected, .selectable:has(:checked) {
-        background-color: var(--color-blue-700);
     }
 
     .default {

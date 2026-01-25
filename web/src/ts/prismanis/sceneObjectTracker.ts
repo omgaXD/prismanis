@@ -1,47 +1,40 @@
 import { Scene } from "./entities/scene";
 import { SceneObject } from "./entities/sceneObjects";
 
-const sceneObjectsDiv = document.getElementById("scene-objects") as HTMLDivElement;
+const sceneObjectsSelect = document.getElementById("scene-objects") as HTMLSelectElement;
 const pointCountSpan = document.getElementById("point-count") as HTMLSpanElement;
 
 export function trackSceneObjects(scene: Scene, switchToTransformTool: () => void) {
 	function addSceneObject(obj: SceneObject) {
-		const objEl = document.createElement("div");
-		objEl.classList.add("select-none", "text-xs", "p-1", "hover:bg-blue-800", "cursor-pointer");
-		objEl.id = `scene-object-${obj.id}`;
-		objEl.addEventListener("click", (ev) => {
-			switchToTransformTool();
-			if (ev.shiftKey) {
-				if (scene.selectedObjectIds.includes(obj.id)) {
-					scene.removeFromSelection(obj.id);
-				} else {
-					scene.addToSelection(obj.id);
-				}
-			} else {
-				if (scene.selectedObjectIds.includes(obj.id) && scene.selectedObjectIds.length === 1) {
-					scene.deselect();
-				} else {
-					scene.selectOnly(obj.id);
-				}
-			}
-		});
+		const objOption = document.createElement("option");
+		objOption.classList.add("text-xs", "p-1", "hover:bg-blue-800", "cursor-pointer");
+		objOption.id = `scene-object-${obj.id}`;
+		objOption.value = obj.id;
 
 		const span = document.createElement("span");
+		span.classList.add("h-8", "flex", "items-center");
 		span.textContent = `${obj.type} ${obj.id}`;
-		objEl.appendChild(span);
+		objOption.appendChild(span);
 
-		objEl.classList.add("scene-object-entry");
-		sceneObjectsDiv.appendChild(objEl);
+		objOption.classList.add("scene-object-entry");
+		sceneObjectsSelect.appendChild(objOption);
 	}
+
+	sceneObjectsSelect.addEventListener("change", () => {
+		const selectedOptions = Array.from(sceneObjectsSelect.selectedOptions);
+		const selectedIds = selectedOptions.map((opt) => opt.value);
+		scene.selectedObjectIds = selectedIds;
+		switchToTransformTool();
+	});
 
 	function updateSceneObjectSelectionStates() {
 		for (const obj of scene.getObjects()) {
-			const objDiv = document.getElementById(`scene-object-${obj.id}`);
-			if (objDiv) {
+			const option = document.getElementById(`scene-object-${obj.id}`) as HTMLOptionElement | null;
+			if (option) {
 				if (scene.selectedObjectIds.includes(obj.id)) {
-					objDiv.classList.add("selected");
+					option.selected = true;
 				} else {
-					objDiv.classList.remove("selected");
+					option.selected = false;
 				}
 			}
 		}
@@ -50,7 +43,7 @@ export function trackSceneObjects(scene: Scene, switchToTransformTool: () => voi
 	function removeSceneObject(objId: string) {
 		const objDiv = document.getElementById(`scene-object-${objId}`);
 		if (objDiv) {
-			sceneObjectsDiv.removeChild(objDiv);
+			sceneObjectsSelect.removeChild(objDiv);
 		}
 	}
 
@@ -60,7 +53,6 @@ export function trackSceneObjects(scene: Scene, switchToTransformTool: () => voi
 	}
 
 	scene.addListener("scene-object-changed", (ev) => {
-		console.log(ev);
 		for (const addedId of ev.addedObjectIds) {
 			const obj = scene.getObjectById(addedId);
 			if (obj) {
@@ -79,6 +71,8 @@ export function trackSceneObjects(scene: Scene, switchToTransformTool: () => voi
 		for (const obj of scene.getObjects()) {
 			if (obj.type === "curve") {
 				totalPoints += obj.curve.points.length;
+			} else if (obj.type === "lens") {
+				totalPoints += 4;
 			}
 		}
 		if (totalPoints < 1000) {
