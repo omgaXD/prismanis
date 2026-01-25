@@ -14,10 +14,9 @@ export class TransformTool extends AbstractTool {
 	private lastAngle = 0;
 	private lastMousePos: { x: number; y: number } = { x: 0, y: 0 };
 	private initialMousePos: { x: number; y: number } = { x: 0, y: 0 };
+	private mouseDownClicked: string[] = [];
 	private transformActionIndex: number | null = null;
 	private rotatedObj: string | null = null;
-	private planningToDeselectId: string | null = null;
-	private planningToSelectOnlyId: string | null = null;
 
 	selectionRect: Rect | null = null;
 
@@ -54,33 +53,34 @@ export class TransformTool extends AbstractTool {
 	}
 
 	private tryStartRotation(event: MouseEvent): boolean {
-		if (this.o.scene.selectedObjectIds.length !== 1) return false;
+		if (this.o.scene.selectedObjectIds.length === 0) return false;
 
 		const mousePos = this.o.hlp.mpg(event);
+		for (const id of this.o.scene.selectedObjectIds) {
+			const obj = this.o.scene.getObjectById(id);
+			if (!obj) continue;
 
-		const obj = this.o.scene.getObjectById(this.o.scene.selectedObjectIds[0]);
-		if (!obj) return false;
+			const corners = obj.transform.getCorners();
+			const centerTop = {
+				x: (corners.tl.x + corners.tr.x) / 2,
+				y: (corners.tl.y + corners.tr.y) / 2,
+			};
+			const handlePos = {
+				x: centerTop.x + 30 * Math.sin(obj.transform.getRotation()),
+				y: centerTop.y + -30 * Math.cos(obj.transform.getRotation()),
+			};
 
-		const corners = obj.transform.getCorners();
-		const centerTop = {
-			x: (corners.tl.x + corners.tr.x) / 2,
-			y: (corners.tl.y + corners.tr.y) / 2,
-		};
-		const handlePos = {
-			x: centerTop.x + 30 * Math.sin(obj.transform.getRotation()),
-			y: centerTop.y + -30 * Math.cos(obj.transform.getRotation()),
-		};
-
-		const handleRadius = 8;
-		if (dist(mousePos, handlePos) <= handleRadius) {
-			this.state = "rotating";
-			this.rotatedObj = obj.id;
-			this.lastAngle = Math.atan2(
-				mousePos.y - obj.transform.getPosition().y,
-				mousePos.x - obj.transform.getPosition().x,
-			);
-			this.transformActionIndex = this.o.scene.startTransform(this.o.scene.selectedObjectIds);
-			return true;
+			const handleRadius = 12;
+			if (dist(mousePos, handlePos) <= handleRadius) {
+				this.state = "rotating";
+				this.rotatedObj = obj.id;
+				this.lastAngle = Math.atan2(
+					mousePos.y - obj.transform.getPosition().y,
+					mousePos.x - obj.transform.getPosition().x,
+				);
+				this.transformActionIndex = this.o.scene.startTransform(this.o.scene.selectedObjectIds);
+				return true;
+			}
 		}
 
 		return false;
@@ -112,25 +112,7 @@ export class TransformTool extends AbstractTool {
 				return;
 			}
 
-			if (
-				this.o.scene.selectedObjectIds.length === 0 ||
-				!clickedObjs.some((id) => this.o.scene.selectedObjectIds.includes(id))
-			) {
-				// Clicked on unselected objects only
-				if (shiftKey) {
-					this.o.scene.addToSelection(clickedObjs[0]);
-				} else {
-					this.o.scene.selectOnly(clickedObjs[0]);
-				}
-			} else {
-				const firstSelectedAndClickedId = this.o.scene.selectedObjectIds.find((id) =>
-					clickedObjs.includes(id)
-				);
-				if (firstSelectedAndClickedId) {
-					// If short click, should deselect later
-					this.planningToDeselectId = firstSelectedAndClickedId ?? null;
-				}
-			}
+			this.mouseDownClicked = clickedObjs;
 
 			this.state = "short-click";
 			this.startTransform();
@@ -160,16 +142,25 @@ export class TransformTool extends AbstractTool {
 			this.state = "idle";
 			return;
 		} else if (this.state === "short-click") {
-			// Perform planned selection/deselection
-			if (this.planningToDeselectId) {
-				this.o.scene.removeFromSelection(this.planningToDeselectId);
-			} else if (this.planningToSelectOnlyId) {
-				this.o.scene.selectOnly(this.planningToSelectOnlyId);
+			const { clickedSelected, clickedNotSelected, nextReasonableSelection } = this.getSelectionDetails();
+
+			if (clickedNotSelected.length > 0) {
+				if (event.shiftKey) {
+					this.o.scene.addToSelection(nextReasonableSelection!);
+				} else {
+					this.o.scene.selectOnly(nextReasonableSelection!);
+				}
+			} else if (clickedSelected.length > 0) {
+				if (event.shiftKey) {
+					this.o.scene.removeFromSelection(clickedSelected[0]);
+				} else {
+					this.o.scene.selectOnly(clickedSelected[0]);
+				}
+			} else {
+				this.o.scene.deselect();
 			}
-			this.endTransform();
 			this.state = "idle";
-			this.planningToDeselectId = null;
-			this.planningToSelectOnlyId = null;
+
 			return;
 		} else if (this.state === "selecting") {
 			const mousePos = this.o.hlp.mpg(event);
@@ -177,6 +168,41 @@ export class TransformTool extends AbstractTool {
 			this.state = "idle";
 			return;
 		}
+	}
+
+	private onMouseMove(event: MouseEvent) {
+		if (!this.isEnabled()) return;
+		if (this.state === "rotating") {
+			this.rotate(event);
+		} else if (this.state === "moving" || this.state === "short-click") {
+			this.drag(event);
+		} else if (this.state === "selecting") {
+			this.updateSelection(event);
+		}
+	}
+
+	private getSelectionDetails() {
+		const clickedSelected: string[] = [];
+		const clickedNotSelected: string[] = [];
+		let nextReasonableSelection: string | null = null;
+		this.mouseDownClicked.forEach((el) => {
+			if (this.o.scene.isObjectSelected(el)) {
+				clickedSelected.push(el);
+			} else {
+				clickedNotSelected.push(el);
+				if (clickedSelected.length > 0 && nextReasonableSelection === null) {
+					nextReasonableSelection = el;
+				}
+			}
+		});
+		if (nextReasonableSelection === null && clickedNotSelected.length > 0) {
+			nextReasonableSelection = clickedNotSelected[0];
+		}
+		return {
+			clickedSelected,
+			clickedNotSelected,
+			nextReasonableSelection,
+		};
 	}
 
 	private rotate(event: MouseEvent) {
@@ -206,6 +232,21 @@ export class TransformTool extends AbstractTool {
 			y: mousePos.y - this.lastMousePos.y,
 		};
 		this.lastMousePos = mousePos;
+
+		if (this.state === "short-click") {
+			const d = this.getSelectionDetails();
+			if (d.clickedSelected.length > 0) {
+				// ok move these
+			} else {
+				if (d.clickedNotSelected.length === 0)
+					throw new Error("Impossible state reached: short-click, but no one  clicked");
+				if (event.shiftKey) {
+					this.o.scene.addToSelection(d.clickedNotSelected[0]);
+				} else {
+					this.o.scene.selectOnly(d.clickedNotSelected[0]);
+				}
+			}
+		}
 
 		if (this.state === "short-click" && dist(mousePos, this.initialMousePos) > 5) {
 			this.state = "moving";
@@ -262,24 +303,17 @@ export class TransformTool extends AbstractTool {
 		}
 	}
 
-	private onMouseMove(event: MouseEvent) {
-		if (!this.isEnabled()) return;
-		if (this.state === "rotating") {
-			this.rotate(event);
-		} else if (this.state === "moving" || this.state === "short-click") {
-			this.drag(event);
-		} else if (this.state === "selecting") {
-			const mousePos = this.o.hlp.mpg(event);
-			const x1 = this.initialMousePos.x;
-			const y1 = this.initialMousePos.y;
-			const x2 = mousePos.x;
-			const y2 = mousePos.y;
-			this.selectionRect = {
-				x: Math.min(x1, x2),
-				y: Math.min(y1, y2),
-				width: Math.abs(x2 - x1),
-				height: Math.abs(y2 - y1),
-			};
-		}
+	private updateSelection(ev: MouseEvent) {
+		const mousePos = this.o.hlp.mpg(ev);
+		const x1 = this.initialMousePos.x;
+		const y1 = this.initialMousePos.y;
+		const x2 = mousePos.x;
+		const y2 = mousePos.y;
+		this.selectionRect = {
+			x: Math.min(x1, x2),
+			y: Math.min(y1, y2),
+			width: Math.abs(x2 - x1),
+			height: Math.abs(y2 - y1),
+		};
 	}
 }
