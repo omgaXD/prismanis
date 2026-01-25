@@ -168,6 +168,6 @@ export class LensTool extends AbstractTool {
 			diffX = Math.max(diffX, -height / 2 + 1);
 		}
 		const radius = (diffX * diffX + (height * height) / 4) / (2 * diffX);
-		return Math.abs(radius) >= height / 2 ? radius : null;
+		return Math.abs(radius) >= height / 2 ? -radius : null;
 	}
 }

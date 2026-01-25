@@ -10,7 +10,6 @@ import { RaycastRay, RaycastTool } from "./tools/raycastTool";
 import { registeredTools } from "./tools/tool";
 import { TransformTool } from "./tools/transformTool";
 
-
 const DEFAULT_THICKNESS = 8;
 const DEFAULT_STROKE_COLOR = "#ffffff";
 const DEFAULT_FILL_COLOR = "#ffffff88";
@@ -53,7 +52,13 @@ export class Renderer {
 		dottedCanvas(this.ctx);
 	}
 
-	drawScene(scene: Scene, paint: PaintTool, lightRaycaster: RaycastTool, lensTool: LensTool, transformTool: TransformTool) {
+	drawScene(
+		scene: Scene,
+		paint: PaintTool,
+		lightRaycaster: RaycastTool,
+		lensTool: LensTool,
+		transformTool: TransformTool,
+	) {
 		this.clear();
 		scene.getObjects().forEach((obj) => {
 			if (obj.type === "curve") {
@@ -266,6 +271,9 @@ function drawLensObject(ctx: CanvasRenderingContext2D, lensObj: SceneLensObject)
 	ctx.beginPath();
 	ctx.moveTo(-thick / 2, -height / 2);
 
+	if (Math.abs(lens.r1) === Infinity) {
+		ctx.lineTo(-thick / 2, height / 2);
+	}
 	if (lens.r1 < 0) {
 		ctx.lineTo(-thick / 2 - leftArc, -height / 2);
 		ctx.arcTo(
@@ -281,7 +289,9 @@ function drawLensObject(ctx: CanvasRenderingContext2D, lensObj: SceneLensObject)
 
 	ctx.lineTo(thick / 2, height / 2);
 
-	if (lens.r2 < 0) {
+	if (Math.abs(lens.r2) === Infinity) {
+		ctx.lineTo(thick / 2, -height / 2);
+	} else if (lens.r2 < 0) {
 		ctx.lineTo(thick / 2 + rightArc, height / 2);
 		ctx.arcTo(
 			-((heightHalf * heightHalf) / small2) + thick / 2 + rightArc,
@@ -323,7 +333,7 @@ function drawLensPreview(ctx: CanvasRenderingContext2D, previewLens: PreviewLens
 	ctx.beginPath();
 	ctx.moveTo(tl.x, tl.y);
 
-	if (lens.r1 === Infinity) {
+	if (Math.abs(lens.r1) === Infinity) {
 		ctx.lineTo(tl.x, br.y);
 	} else if (lens.r1 < 0) {
 		ctx.lineTo(tl.x - leftArc, tl.y);
@@ -340,7 +350,7 @@ function drawLensPreview(ctx: CanvasRenderingContext2D, previewLens: PreviewLens
 
 	ctx.lineTo(br.x, br.y);
 
-	if (lens.r2 === Infinity) {
+	if (Math.abs(lens.r2) === Infinity) {
 		ctx.lineTo(br.x, tl.y);
 	} else if (lens.r2 < 0) {
 		ctx.lineTo(br.x + rightArc, br.y);

@@ -14,8 +14,8 @@ export function calculateWidth(lens: Lens, height: number): { totalWidth: number
 	const r1 = lens.r1;
 	const r2 = lens.r2;
 
-	const leftArc = Math.abs(r1) - Math.sqrt(r1 * r1 - (h * h) / 4);
-	const rightArc = Math.abs(r2) - Math.sqrt(r2 * r2 - (h * h) / 4);
+	const leftArc = Math.abs(r1) === Infinity ? 0 : Math.abs(r1) - Math.sqrt(r1 * r1 - (h * h) / 4);
+	const rightArc = Math.abs(r2) === Infinity ? 0 : Math.abs(r2) - Math.sqrt(r2 * r2 - (h * h) / 4);
 
 	const totalWidth = leftArc + t + rightArc;
 
