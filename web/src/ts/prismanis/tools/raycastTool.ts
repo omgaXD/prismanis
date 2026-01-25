@@ -102,6 +102,12 @@ export class RaycastTool extends AbstractTool {
 			this.previewRays.length = 0;
 		});
 
+		this.o.hlp.registerEscapeListener(() => {
+			if (this.isEnabled() === false) return;
+			this.state = "idle";
+			this.fixedAt = null;
+		});
+
 		this.registerSetting(
 			new ToolSettingSelect({
 				id: "raycast-type",
