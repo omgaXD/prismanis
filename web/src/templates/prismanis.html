@@ -13,22 +13,24 @@
 			<select multiple id="scene-objects"></select>
 		</section>
 		<div class="toolbox absolute top-2 -right-2 translate-x-full flex flex-col gap-2">
-			<label class="icon-btn default">
-				<i class="las la-mouse-pointer"></i>
-				<input type="radio" value="toggle-transform" name="tool" class="sr-only" />
-			</label>
-			<label class="icon-btn default">
-				<i class="las la-paint-brush"></i>
-				<input type="radio" value="toggle-paint" name="tool" class="sr-only" checked />
-			</label>
-			<label class="icon-btn default">
-				<i class="las la-glasses"></i>
-				<input type="radio" value="toggle-lens" name="tool" class="sr-only" />
-			</label>
-			<label class="icon-btn warning">
-				<i class="las la-lightbulb"></i>
-				<input type="radio" value="toggle-raycast" name="tool" class="sr-only" />
-			</label>
+			<div class="flex flex-col gap-2 has-focus-visible:outline-blue-500 has-focus-visible:outline outline-offset-4 rounded-xl">
+				<label class="icon-btn default">
+					<i class="las la-mouse-pointer"></i>
+					<input type="radio" value="toggle-transform" name="tool" class="sr-only" />
+				</label>
+				<label class="icon-btn default">
+					<i class="las la-paint-brush"></i>
+					<input type="radio" value="toggle-paint" name="tool" class="sr-only" checked />
+				</label>
+				<label class="icon-btn default">
+					<i class="las la-glasses"></i>
+					<input type="radio" value="toggle-lens" name="tool" class="sr-only" />
+				</label>
+				<label class="icon-btn warning">
+					<i class="las la-lightbulb"></i>
+					<input type="radio" value="toggle-raycast" name="tool" class="sr-only" />
+				</label>
+			</div>
 			<button class="icon-btn danger" id="clear-btn">
 				<i class="las la-trash"></i>
 			</button>
