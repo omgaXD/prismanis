@@ -358,7 +358,7 @@ export class Transform {
 	}
 
 	/**
-	 * Returns the top-left corner of the rotated bounding rect
+	 * Returns the four corners of the transformed rectangle
 	 */
 	getCorners(): { tl: Vec2; tr: Vec2; br: Vec2; bl: Vec2 } {
 		const cos = Math.cos(this.rot);

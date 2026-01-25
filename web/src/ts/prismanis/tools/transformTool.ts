@@ -1,4 +1,4 @@
-import { dist, pointInRect } from "../math/geometry";
+import { dist, doRotatedRectsOverlap, pointInRotatedRect } from "../math/geometry";
 import { ToolHelper } from "../render";
 import { Scene } from "../entities/scene";
 import { AbstractTool, BaseToolOptions } from "./tool";
@@ -101,8 +101,8 @@ export class TransformTool extends AbstractTool {
 		if (this.state === "idle") {
 			const clickedObjs: string[] = [];
 			for (const obj of this.o.scene.getObjects()) {
-				const objRect = obj.transform.getBoundingRect();
-				if (pointInRect(mousePos, objRect)) {
+				const {tl,tr,bl,br} = obj.transform.getCorners();
+				if (pointInRotatedRect(mousePos, tl, tr, bl, br)) {
 					clickedObjs.push(obj.id);
 				}
 			}
@@ -275,13 +275,9 @@ export class TransformTool extends AbstractTool {
 
 		const selectedIds: string[] = [];
 		for (const obj of this.o.scene.getObjects()) {
-			const objRect = obj.transform.getBoundingRect();
-			if (
-				rect.x < objRect.x + objRect.width &&
-				rect.x + rect.width > objRect.x &&
-				rect.y < objRect.y + objRect.height &&
-				rect.y + rect.height > objRect.y
-			) {
+			const { tl, tr, bl, br } = obj.transform.getCorners();
+			const inRect = doRotatedRectsOverlap(tl, tr, bl, { x: rect.x, y: rect.y }, { x: rect.x + rect.width, y: rect.y }, { x: rect.x, y: rect.y + rect.height });
+			if (inRect) {
 				selectedIds.push(obj.id);
 			}
 		}
