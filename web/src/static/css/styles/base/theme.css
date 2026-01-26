@@ -36,6 +36,19 @@
                 border-top: 1px solid var(--color-stone-700);
             }
         }
+
+        &.round {
+            border-radius: var(--radius-lg);
+        }
+
+        &.hover-highlight:hover {
+            background-color: var(--color-stone-800);
+        }
+
+        &.checked-highlight:has(:checked) {
+            background-color: var(--color-blue-800);
+            border-color: var(--color-blue-400);
+        }
     }
 
     .form-label {

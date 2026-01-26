@@ -1,5 +1,5 @@
 import { CurveAdder } from "../entities/sceneObjects";
-import { ToolSettingSelect } from "../entities/toolSettings";
+import { ToolSettingSelect, ToolSettingSnapAngle } from "../entities/toolSettings";
 import { Curve, Vec2 } from "../primitives";
 import { ToolHelper } from "../render";
 import { AbstractTool, BaseToolOptions } from "./tool";
@@ -57,21 +57,11 @@ export class PrismTool extends AbstractTool {
 		this.o.hlp.registerEscapeListener(() => this.onEscape());
 
 		this.registerSetting(
-			new ToolSettingSelect({
+			new ToolSettingSnapAngle({
 				id: "prism-tool-snap-angle",
-				displayName: "Snap Angle",
-				value: "0",
-				default: "0",
-				options: [
-					{ value: "0", displayName: "None" },
-					{ value: "15", displayName: "15°" },
-					{ value: "30", displayName: "30°" },
-					{ value: "45", displayName: "45°" },
-					{ value: "90", displayName: "90°" },
-				],
 			}),
 			(val) => {
-				this.snapAngle = parseInt(val, 10);
+				this.snapAngle = val * (Math.PI / 180);
 			},
 		);
 
@@ -105,7 +95,6 @@ export class PrismTool extends AbstractTool {
 
 	private onMouseDown(e: MouseEvent): void {
 		if (!this.isEnabled()) return;
-		const pos = this.o.hlp.mpg(e);
 		if (this.state === "idle") {
 			this.state = "rect";
 		} else if (this.state === "rect") {
@@ -174,7 +163,7 @@ export class PrismTool extends AbstractTool {
 
 				let angle = Math.atan2(this.fixedAt3.y - centerY, this.fixedAt3.x - centerX);
 				if (this.snapAngle > 0) {
-					const snapRad = (this.snapAngle * Math.PI) / 180;
+					const snapRad = this.snapAngle;
 					const snappedAngle = Math.round(angle / snapRad) * snapRad;
 					angle = snappedAngle;
 				}

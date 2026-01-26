@@ -1,0 +1,13 @@
+@layer components {
+    .compact-radio-group {
+        display: flex;
+        gap: 0.5rem;
+        label {
+            margin: 0;
+            display: flex;
+            input {
+                @apply sr-only;
+            }
+        }
+    }
+}

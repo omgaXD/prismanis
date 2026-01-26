@@ -3,6 +3,7 @@ import { ToolHelper } from "../render";
 import { Scene } from "../entities/scene";
 import { AbstractTool, BaseToolOptions } from "./tool";
 import { Rect, Vec2 } from "../primitives";
+import { ToolSettingSnapAngle } from "../entities/toolSettings";
 
 export type TransformToolOptions = BaseToolOptions & {
 	hlp: ToolHelper;
@@ -11,12 +12,14 @@ export type TransformToolOptions = BaseToolOptions & {
 
 export class TransformTool extends AbstractTool {
 	private state: "idle" | "rotating" | "short-click" | "moving" | "selecting" = "idle";
+	private initialAngle = 0;
 	private lastAngle = 0;
 	private lastMousePos: { x: number; y: number } = { x: 0, y: 0 };
 	private initialMousePos: { x: number; y: number } = { x: 0, y: 0 };
 	private mouseDownClicked: string[] = [];
 	private transformActionIndex: number | null = null;
 	private rotatedObj: string | null = null;
+	private snapAngle: number = 0;
 
 	selectionRect: Rect | null = null;
 
@@ -38,6 +41,9 @@ export class TransformTool extends AbstractTool {
 		this.o.hlp.registerMouseDownListener(this.onMouseDown.bind(this));
 		this.o.hlp.registerMouseUpListener(this.onMouseUp.bind(this));
 		this.o.hlp.registerMouseMoveListener(this.onMouseMove.bind(this));
+		this.registerSetting(new ToolSettingSnapAngle({ id: "transform-tool-snap-angle" }), (newVal) => {
+			this.snapAngle = newVal * (Math.PI / 180);
+		});
 	}
 
 	private startTransform() {
@@ -74,10 +80,11 @@ export class TransformTool extends AbstractTool {
 			if (dist(mousePos, handlePos) <= handleRadius) {
 				this.state = "rotating";
 				this.rotatedObj = obj.id;
-				this.lastAngle = Math.atan2(
+				this.initialAngle = Math.atan2(
 					mousePos.y - obj.transform.getPosition().y,
 					mousePos.x - obj.transform.getPosition().x,
 				);
+				this.lastAngle = 0;
 				this.transformActionIndex = this.o.scene.startTransform(this.o.scene.selectedObjectIds);
 				return true;
 			}
@@ -215,12 +222,21 @@ export class TransformTool extends AbstractTool {
 
 		const center = obj.transform.getPosition();
 		const angle = Math.atan2(mousePos.y - center.y, mousePos.x - center.x);
-		const angleDelta = angle - this.lastAngle;
-		this.lastAngle = angle;
+		const newAngle = angle - this.initialAngle;
+		const oldAngle = this.lastAngle;
+		
+		
+		// snap with respect to initial angle
+		let snappedAngle = newAngle;
+		if (this.snapAngle > 0) {
+			snappedAngle = Math.round(newAngle / this.snapAngle) * this.snapAngle;
+		}
+		this.lastAngle = snappedAngle;
+
 		for (const id of this.o.scene.selectedObjectIds) {
 			const selectedObj = this.o.scene.getObjectById(id);
 			if (selectedObj) {
-				selectedObj.transform.rotate(angleDelta);
+				selectedObj.transform.rotate(snappedAngle - oldAngle);
 			}
 		}
 	}

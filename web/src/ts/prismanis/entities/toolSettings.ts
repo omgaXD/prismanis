@@ -131,3 +131,23 @@ export class ToolSettingSelect<T> extends ToolSetting<string> {
 		return this.options.some((opt) => opt.value === value);
 	}
 }
+
+/**
+ * Angle in degrees
+ */
+export class ToolSettingSnapAngle extends ToolSetting<number> {
+	constructor(config: {
+		id: string;
+	}) {
+		super({
+			id: config.id,
+			displayName: "Snap Angle",
+			value: 15,
+			default: 15,
+		});
+	}
+
+	validate(value: number): boolean {
+		return value > 0 && value <= 90 && 90 % value === 0;
+	}
+}

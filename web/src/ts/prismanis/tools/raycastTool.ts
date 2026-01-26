@@ -3,7 +3,7 @@ import { normalizeVec2, rotateVec } from "../math/geometry";
 import { Curve, Vec2 } from "../primitives";
 import { ToolHelper } from "../render";
 import { Scene } from "../entities/scene";
-import { ToolSettingSelect } from "../entities/toolSettings";
+import { ToolSettingSelect, ToolSettingSnapAngle } from "../entities/toolSettings";
 import { AbstractTool, BaseToolOptions } from "./tool";
 import { ray, rays } from "../math/raycasting";
 import { LightSourceAdder } from "../entities/sceneObjects";
@@ -25,6 +25,7 @@ export class RaycastTool extends AbstractTool {
 	state: "idle" | "choose-direction" = "idle";
 	fixedAt: Vec2 | null = null;
 	isReasonableDrag = false;
+	snapAngle: number = 0;
 
 	constructor(private o: RaycastToolOptions) {
 		super(o);
@@ -37,6 +38,12 @@ export class RaycastTool extends AbstractTool {
 			x: clickedAt.x - this.fixedAt.x,
 			y: clickedAt.y - this.fixedAt.y,
 		});
+		if (this.snapAngle > 0) {
+			const angle = Math.atan2(dir.y, dir.x);
+			const snappedAngle = Math.round(angle / this.snapAngle) * this.snapAngle;
+			dir.x = Math.cos(snappedAngle);
+			dir.y = Math.sin(snappedAngle);
+		}
 		this.o.lightSourceAdder(this.rayConfig, this.fixedAt, dir);
 	}
 
@@ -87,10 +94,16 @@ export class RaycastTool extends AbstractTool {
 						this.isReasonableDrag = true;
 					}
 				}
-				mainDir = normalizeVec2({
+				let dir = normalizeVec2({
 					x: mouse.x - this.fixedAt.x,
 					y: mouse.y - this.fixedAt.y,
 				});
+				if (this.snapAngle > 0) {
+					const angle = Math.atan2(dir.y, dir.x);
+					const snappedAngle = Math.round(angle / this.snapAngle) * this.snapAngle;
+					dir = { x: Math.cos(snappedAngle), y: Math.sin(snappedAngle) };
+				}
+				mainDir = dir;
 			} else throw new Error("Invalid state in mouse move listener");
 			this.previewRays = rays(at, mainDir, this.rayConfig, this.o.scene);
 		});
@@ -130,9 +143,11 @@ export class RaycastTool extends AbstractTool {
 				this.rayConfig = RAY_CONFIGS[newValue as keyof typeof RAY_CONFIGS];
 			},
 		);
-	}
 
-	shootRays() {}
+		this.registerSetting(new ToolSettingSnapAngle({ id: "raycast-snap-angle" }), (newVal) => {
+			this.snapAngle = newVal * (Math.PI / 180);
+		});
+	}
 
 	onToggled(enabled: boolean) {
 		if (!enabled) {

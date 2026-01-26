@@ -1,6 +1,6 @@
 import { AbstractTool, registeredTools } from "../tools/tool";
 import { Scene } from "./scene";
-import { ToolSettingSelect, ToolSettingNumber, ToolSettingSlider } from "./toolSettings";
+import { ToolSettingSelect, ToolSettingNumber, ToolSettingSlider, ToolSettingSnapAngle } from "./toolSettings";
 
 
 const toolNameElem = document.getElementById("tool-name") as HTMLHeadingElement;
@@ -102,6 +102,33 @@ export function switchToTool(tool: AbstractTool, currentScene: Scene) {
 				output.value = sliderInput.value;
 			});
 			optionDiv.appendChild(output);
+		} else if (setting instanceof ToolSettingSnapAngle) {
+			const radioGroup = document.createElement("div");
+			radioGroup.classList.add("compact-radio-group");
+			const options = [0, 15, 30, 45, 90];
+			options.forEach((angle) => {
+				const radioLabel = document.createElement("label");
+				radioLabel.className = "round rect text-base px-1 hover-highlight checked-highlight";
+				radioLabel.textContent = angle === 0 ? "None" : `${angle}°`;
+
+				const radioInput = document.createElement("input");
+				radioInput.type = "radio";
+				radioInput.name = `snap-angle-${setting.id}`;
+				radioInput.value = angle.toString();
+				radioInput.classList.add("form-check-input");
+				if (setting.getValue() === angle) {
+					radioInput.checked = true;
+				}
+				radioInput.addEventListener("change", () => {
+					if (radioInput.checked) {
+						setting.setValue(angle);
+					}
+				});
+
+				radioLabel.prepend(radioInput);
+				radioGroup.appendChild(radioLabel);
+			});
+			input = radioGroup;
 		} else {
 			throw new Error(`Unsupported tool option type for option ${setting.id}`);
 		}
