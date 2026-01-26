@@ -42,6 +42,7 @@ export class PrismTool extends AbstractTool {
 	fixedAt: Vec2 | null = null;
 	fixedAt2: Vec2 | null = null;
 	fixedAt3: Vec2 | null = null;
+	reasonableDrag: boolean = false;
 	snapAngle: number = 0;
 	curve: Curve = RIGHT_TRIANGLE;
 
@@ -95,6 +96,7 @@ export class PrismTool extends AbstractTool {
 
 	private onMouseDown(e: MouseEvent): void {
 		if (!this.isEnabled()) return;
+		this.reasonableDrag = false;
 		if (this.state === "idle") {
 			this.state = "rect";
 		} else if (this.state === "rect") {
@@ -127,6 +129,9 @@ export class PrismTool extends AbstractTool {
 				return;
 			}
 			this.fixedAt2 = pos;
+			if (this.fixedAt && (Math.abs(this.fixedAt2.x - this.fixedAt.x) > 5 || Math.abs(this.fixedAt2.y - this.fixedAt.y) > 5)) {
+				this.reasonableDrag = true;
+			}
 		} else if (this.state === "rotate") {
 			this.fixedAt3 = pos;
 		}
@@ -135,6 +140,9 @@ export class PrismTool extends AbstractTool {
 
 	private onMouseUp(e: MouseEvent): void {
 		if (!this.isEnabled()) return;
+		if (this.state === "rect" && this.reasonableDrag) {
+			this.state = "rotate";
+		}
 	}
 
 	private onEscape(): void {

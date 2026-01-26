@@ -344,6 +344,12 @@ function drawLensPreview(ctx: CanvasRenderingContext2D, previewLens: PreviewLens
 	ctx.lineWidth = DEFAULT_THICKNESS;
 
 	ctx.beginPath();
+
+	const centerX = (tl.x + br.x) / 2;
+	const centerY = (tl.y + br.y) / 2;
+	ctx.translate(centerX, centerY);
+	ctx.rotate(previewLens.rotationRad);
+	ctx.translate(-centerX, -centerY);
 	ctx.moveTo(tl.x, tl.y);
 
 	if (Math.abs(lens.r1) === Infinity) {

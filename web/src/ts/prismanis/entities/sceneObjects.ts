@@ -44,12 +44,12 @@ export function curveAdderFactory(scene: Scene): CurveAdder {
 	};
 }
 
-export type LensAdder = (lens: Lens, position: Vec2, height: number) => SceneLensObject;
+export type LensAdder = (lens: Lens, position: Vec2, height: number, rotationRad: number) => SceneLensObject;
 export function lensAdderFactory(scene: Scene): LensAdder {
-	return function (lens: Lens, position: Vec2, height: number) {
+	return function (lens: Lens, position: Vec2, height: number, rotationRad: number) {
 		const { totalWidth, leftArc, rightArc } = calculateWidth(lens, height);
 		console.log(totalWidth, leftArc, rightArc);
-		const transform = new Transform({ x: position.x, y: position.y }, 0, {
+		const transform = new Transform({ x: position.x, y: position.y }, rotationRad, {
 			x: totalWidth,
 			y: height,
 		});
