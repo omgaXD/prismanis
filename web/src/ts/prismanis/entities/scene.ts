@@ -127,6 +127,7 @@ export class Scene {
 				this.selectedObjectIds.push(id);
 			}
 		});
+		this.notifySceneObjectChanged([], []);
 	}
 
 	removeFromSelection(objectId: string) {
