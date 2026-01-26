@@ -24,6 +24,7 @@ export function setupTools(currentScene: Scene) {
 	setupClearButton(currentScene);
 	setupUndoRedoButtons(currentScene);
 	setupDeleteKeyListener(currentScene);
+	setupSelectionListeners(currentScene);
 }
 
 export function switchToTool(tool: AbstractTool, currentScene: Scene) {
@@ -192,6 +193,24 @@ function setupDeleteKeyListener(scene: Scene) {
 		if (ev.key === "Delete") {
 			scene.remove(scene.selectedObjectIds);
 			ev.preventDefault();
+		}
+	});
+}
+
+function setupSelectionListeners(scene: Scene) {
+	window.addEventListener("keydown", (ev) => {
+		if (ev.ctrlKey && ev.key.toLowerCase() === "a") {
+			ev.preventDefault();
+			if (scene.getObjects().length === scene.selectedObjectIds.length) {
+				scene.deselect();
+			} else {
+				scene.addToSelection(scene.getObjects().map((obj) => obj.id));
+				ev.preventDefault();
+			}
+		}
+		if (ev.ctrlKey && ev.key.toLowerCase() === "d") {
+			ev.preventDefault();
+			scene.deselect();
 		}
 	});
 }

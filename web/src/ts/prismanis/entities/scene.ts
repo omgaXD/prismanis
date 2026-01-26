@@ -117,13 +117,16 @@ export class Scene {
 		return this.selectedObjectIds.includes(objectId);
 	}
 
-	addToSelection(objectId: string) {
-		this.ensureObjectExists(objectId);
-
-		if (!this.isObjectSelected(objectId)) {
-			this.selectedObjectIds.push(objectId);
-			this.notifySceneObjectChanged([], []);
+	addToSelection(objectId: string | string[]) {
+		if (typeof objectId === 'string') {
+			objectId = [objectId];
 		}
+		objectId.forEach((id) => {
+			this.ensureObjectExists(id);
+			if (!this.selectedObjectIds.includes(id)) {
+				this.selectedObjectIds.push(id);
+			}
+		});
 	}
 
 	removeFromSelection(objectId: string) {
