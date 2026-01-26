@@ -92,7 +92,7 @@ export class Renderer {
 		}
 		const previewCurve = prismTool.previewPrism();
 		if (previewCurve) {
-			drawCurve(this.ctx, previewCurve, "#ffff00");
+			drawCurve(this.ctx, previewCurve, "#ffff00", "transparent");
 		}
 	}
 
@@ -386,6 +386,7 @@ function drawCurve(
 	ctx: CanvasRenderingContext2D,
 	curve: Curve,
 	color: string = DEFAULT_STROKE_COLOR,
+	fillColor: string = DEFAULT_FILL_COLOR,
 	lightBlending: boolean = false,
 ) {
 	if (curve.points.length === 0) return;
@@ -395,6 +396,7 @@ function drawCurve(
 	ctx.save();
 	ctx.lineWidth = thickness;
 	ctx.strokeStyle = color;
+	ctx.fillStyle = fillColor;
 	if (lightBlending) {
 		ctx.globalCompositeOperation = "screen";
 	}
@@ -406,7 +408,6 @@ function drawCurve(
 	}
 	if (curve.isClosed) {
 		ctx.closePath();
-		ctx.fillStyle = DEFAULT_FILL_COLOR;
 		ctx.fill();
 	}
 	ctx.stroke();
@@ -430,7 +431,7 @@ function drawLightSourceObj(ctx: CanvasRenderingContext2D, lightSourceObject: Sc
 function drawRays(ctx: CanvasRenderingContext2D, rays: RaycastRay[]) {
 	for (const ray of rays) {
 		const { r, g, b } = wavelengthToRGB(ray.wavelength);
-		drawCurve(ctx, ray, `rgba(${r}, ${g}, ${b}, ${ray.opacity})`, true);
+		drawCurve(ctx, ray, `rgba(${r}, ${g}, ${b}, ${ray.opacity})`, '', true);
 	}
 }
 
