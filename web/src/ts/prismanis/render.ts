@@ -6,6 +6,7 @@ import { bake, rays } from "./math/raycasting";
 import { Vec2, Curve, Rect } from "./primitives";
 import { LensTool, PreviewLens } from "./tools/lensTool";
 import { PaintTool } from "./tools/paintTool";
+import { PrismTool } from "./tools/prismTool";
 import { RaycastRay, RaycastTool } from "./tools/raycastTool";
 import { registeredTools } from "./tools/tool";
 import { TransformTool } from "./tools/transformTool";
@@ -58,6 +59,7 @@ export class Renderer {
 		lightRaycaster: RaycastTool,
 		lensTool: LensTool,
 		transformTool: TransformTool,
+		prismTool: PrismTool,
 	) {
 		this.clear();
 		scene.getObjects().forEach((obj) => {
@@ -88,6 +90,10 @@ export class Renderer {
 		if (transformTool.selectionRect) {
 			drawSelectionRect(this.ctx, transformTool.selectionRect);
 		}
+		const previewCurve = prismTool.previewPrism();
+		if (previewCurve) {
+			drawCurve(this.ctx, previewCurve, "#ffff00");
+		}
 	}
 
 	setupRender(scene: Scene) {
@@ -95,6 +101,7 @@ export class Renderer {
 		const lightRaycaster = registeredTools.find((t) => t instanceof RaycastTool);
 		const lensTool = registeredTools.find((t) => t instanceof LensTool);
 		const transformTool = registeredTools.find((t) => t instanceof TransformTool);
+		const prismTool = registeredTools.find((t) => t instanceof PrismTool);
 		if (!(paint instanceof PaintTool)) {
 			throw new Error("Paint tool not registered");
 		}
@@ -104,9 +111,15 @@ export class Renderer {
 		if (!(lensTool instanceof LensTool)) {
 			throw new Error("Lens tool not registered");
 		}
+		if (!(transformTool instanceof TransformTool)) {
+			throw new Error("Transform tool not registered");
+		}
+		if (!(prismTool instanceof PrismTool)) {
+			throw new Error("Prism tool not registered");
+		}
 		function drawLoop(drawScene: typeof Renderer.prototype.drawScene) {
 			requestAnimationFrame(() => {
-				drawScene(scene, paint!, lightRaycaster!, lensTool!, transformTool!);
+				drawScene(scene, paint!, lightRaycaster!, lensTool!, transformTool!, prismTool!);
 				drawLoop(drawScene);
 			});
 		}

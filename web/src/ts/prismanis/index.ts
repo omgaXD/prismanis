@@ -8,6 +8,7 @@ import { LensTool } from "./tools/lensTool";
 import { Scene } from "./entities/scene";
 import { curveAdderFactory, lensAdderFactory, lightSourceAdderFactory } from "./entities/sceneObjects";
 import { setupTools, switchToTool } from "./entities/tools";
+import { PrismTool } from "./tools/prismTool";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
@@ -54,6 +55,16 @@ if (ctx) {
 			scene: currentScene,
 			preservesSelection: true,
 			lensAdder: lensAdderFactory(currentScene),
+		}),
+	);
+	const prismTool = registerTool(
+		new PrismTool({
+			id: "prism",
+			displayName: "Prism Tool",
+			displayDescription: "Place prisms. Pick points to define the base shape.",
+			hlp: renderer.getToolHelper(),
+			preservesSelection: true,
+			curveAdder: curveAdderFactory(currentScene),
 		}),
 	);
 
