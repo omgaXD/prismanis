@@ -1,7 +1,7 @@
 import { RAY_CONFIGS, RayOptions } from "../entities/rayConfigs";
 import { normalizeVec2, rotateVec } from "../math/geometry";
 import { Curve, Vec2 } from "../primitives";
-import { ToolHelper } from "../render";
+import { CanvasInteractionHelper } from "../render";
 import { Scene } from "../entities/scene";
 import { ToolSettingSelect, ToolSettingSnapAngle } from "../entities/toolSettings";
 import { AbstractTool, BaseToolOptions } from "./tool";
@@ -9,9 +9,9 @@ import { ray, rays } from "../math/raycasting";
 import { LightSourceAdder } from "../entities/sceneObjects";
 
 export type RaycastToolOptions = BaseToolOptions & {
-	hlp: ToolHelper;
+	hlp: CanvasInteractionHelper;
 	scene: Scene;
-	lightSourceAdder: LightSourceAdder;
+	addLightSource: LightSourceAdder;
 };
 
 export type RaycastRay = Curve & {
@@ -44,7 +44,7 @@ export class RaycastTool extends AbstractTool {
 			dir.x = Math.cos(snappedAngle);
 			dir.y = Math.sin(snappedAngle);
 		}
-		this.o.lightSourceAdder(this.rayConfig, this.fixedAt, dir);
+		this.o.addLightSource(this.rayConfig, this.fixedAt, dir);
 	}
 
 	init() {
@@ -53,11 +53,11 @@ export class RaycastTool extends AbstractTool {
 				return;
 			}
 			if (this.state === "idle") {
-				this.fixedAt = this.o.hlp.mpg(ev);
+				this.fixedAt = this.o.hlp.getMousePosition(ev);
 				this.isReasonableDrag = false;
 				this.state = "choose-direction";
 			} else if (this.state === "choose-direction") {
-				this.addToScene(this.o.hlp.mpg(ev));
+				this.addToScene(this.o.hlp.getMousePosition(ev));
 				this.state = "idle";
 				this.fixedAt = null;
 				this.previewRays = [];
@@ -69,7 +69,7 @@ export class RaycastTool extends AbstractTool {
 				return;
 			}
 			if (this.state === "choose-direction" && this.isReasonableDrag) {
-				this.addToScene(this.o.hlp.mpg(ev));
+				this.addToScene(this.o.hlp.getMousePosition(ev));
 				this.state = "idle";
 				this.fixedAt = null;
 				this.previewRays = [];
@@ -80,7 +80,7 @@ export class RaycastTool extends AbstractTool {
 			if (!this.isEnabled()) {
 				return;
 			}
-			const mouse = this.o.hlp.mpg(ev);
+			const mouse = this.o.hlp.getMousePosition(ev);
 			let at: Vec2;
 			let mainDir: Vec2;
 			if (this.state === "idle") {

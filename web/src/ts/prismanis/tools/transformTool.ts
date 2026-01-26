@@ -1,12 +1,12 @@
 import { dist, doRotatedRectsOverlap, pointInRotatedRect } from "../math/geometry";
-import { ToolHelper } from "../render";
+import { CanvasInteractionHelper } from "../render";
 import { Scene } from "../entities/scene";
 import { AbstractTool, BaseToolOptions } from "./tool";
 import { Rect, Vec2 } from "../primitives";
 import { ToolSettingSnapAngle } from "../entities/toolSettings";
 
 export type TransformToolOptions = BaseToolOptions & {
-	hlp: ToolHelper;
+	hlp: CanvasInteractionHelper;
 	scene: Scene;
 };
 
@@ -61,7 +61,7 @@ export class TransformTool extends AbstractTool {
 	private tryStartRotation(event: MouseEvent): boolean {
 		if (this.o.scene.selectedObjectIds.length === 0) return false;
 
-		const mousePos = this.o.hlp.mpg(event);
+		const mousePos = this.o.hlp.getMousePosition(event);
 		for (const id of this.o.scene.selectedObjectIds) {
 			const obj = this.o.scene.getObjectById(id);
 			if (!obj) continue;
@@ -96,7 +96,7 @@ export class TransformTool extends AbstractTool {
 	private onMouseDown(event: MouseEvent) {
 		if (!this.isEnabled()) return;
 		const shiftKey = event.shiftKey;
-		const mousePos = this.o.hlp.mpg(event);
+		const mousePos = this.o.hlp.getMousePosition(event);
 
 		this.initialMousePos = mousePos;
 		this.lastMousePos = mousePos;
@@ -108,7 +108,7 @@ export class TransformTool extends AbstractTool {
 		if (this.state === "idle") {
 			const clickedObjs: string[] = [];
 			for (const obj of this.o.scene.getObjects()) {
-				const {tl,tr,bl,br} = obj.transform.getCorners();
+				const { tl, tr, bl, br } = obj.transform.getCorners();
 				if (pointInRotatedRect(mousePos, tl, tr, bl, br)) {
 					clickedObjs.push(obj.id);
 				}
@@ -170,7 +170,7 @@ export class TransformTool extends AbstractTool {
 
 			return;
 		} else if (this.state === "selecting") {
-			const mousePos = this.o.hlp.mpg(event);
+			const mousePos = this.o.hlp.getMousePosition(event);
 			this.selectWithin(mousePos, event.shiftKey);
 			this.state = "idle";
 			return;
@@ -213,7 +213,7 @@ export class TransformTool extends AbstractTool {
 	}
 
 	private rotate(event: MouseEvent) {
-		const mousePos = this.o.hlp.mpg(event);
+		const mousePos = this.o.hlp.getMousePosition(event);
 
 		this.lastMousePos = mousePos;
 
@@ -224,8 +224,7 @@ export class TransformTool extends AbstractTool {
 		const angle = Math.atan2(mousePos.y - center.y, mousePos.x - center.x);
 		const newAngle = angle - this.initialAngle;
 		const oldAngle = this.lastAngle;
-		
-		
+
 		// snap with respect to initial angle
 		let snappedAngle = newAngle;
 		if (this.snapAngle > 0) {
@@ -241,7 +240,7 @@ export class TransformTool extends AbstractTool {
 		}
 	}
 	private drag(event: MouseEvent) {
-		const mousePos = this.o.hlp.mpg(event);
+		const mousePos = this.o.hlp.getMousePosition(event);
 
 		const mouseDelta = {
 			x: mousePos.x - this.lastMousePos.x,
@@ -292,7 +291,14 @@ export class TransformTool extends AbstractTool {
 		const selectedIds: string[] = [];
 		for (const obj of this.o.scene.getObjects()) {
 			const { tl, tr, bl, br } = obj.transform.getCorners();
-			const inRect = doRotatedRectsOverlap(tl, tr, bl, { x: rect.x, y: rect.y }, { x: rect.x + rect.width, y: rect.y }, { x: rect.x, y: rect.y + rect.height });
+			const inRect = doRotatedRectsOverlap(
+				tl,
+				tr,
+				bl,
+				{ x: rect.x, y: rect.y },
+				{ x: rect.x + rect.width, y: rect.y },
+				{ x: rect.x, y: rect.y + rect.height },
+			);
 			if (inRect) {
 				selectedIds.push(obj.id);
 			}
@@ -316,7 +322,7 @@ export class TransformTool extends AbstractTool {
 	}
 
 	private updateSelection(ev: MouseEvent) {
-		const mousePos = this.o.hlp.mpg(ev);
+		const mousePos = this.o.hlp.getMousePosition(ev);
 		const x1 = this.initialMousePos.x;
 		const y1 = this.initialMousePos.y;
 		const x2 = mousePos.x;

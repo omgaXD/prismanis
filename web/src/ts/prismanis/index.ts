@@ -22,7 +22,7 @@ if (ctx) {
 			id: "paint",
 			displayName: "Paint Tool",
 			displayDescription: "Draw freeform closed curves. Open curves will dissapear.",
-			hlp: renderer.getToolHelper(),
+			hlp: renderer.getCanvasInteractionHelper(),
 			onCurveClosed: curveAdderFactory(currentScene),
 		}),
 	);
@@ -31,9 +31,9 @@ if (ctx) {
 			id: "raycast",
 			displayName: "Raycast Tool",
 			displayDescription: "Place light sources. Choose position and direction.",
-			hlp: renderer.getToolHelper(),
+			hlp: renderer.getCanvasInteractionHelper(),
 			scene: currentScene,
-			lightSourceAdder: lightSourceAdderFactory(currentScene),
+			addLightSource: lightSourceAdderFactory(currentScene),
 		}),
 	);
 	const transformTool = registerTool(
@@ -41,7 +41,7 @@ if (ctx) {
 			id: "transform",
 			displayName: "Transform Tool",
 			displayDescription: "Select, move and rotate objects.",
-			hlp: renderer.getToolHelper(),
+			hlp: renderer.getCanvasInteractionHelper(),
 			scene: currentScene,
 			preservesSelection: true,
 		}),
@@ -51,10 +51,10 @@ if (ctx) {
 			id: "lens",
 			displayName: "Lens Tool",
 			displayDescription: "Place lenses. Draw a rectangle and choose the radius for each side.",
-			hlp: renderer.getToolHelper(),
+			hlp: renderer.getCanvasInteractionHelper(),
 			scene: currentScene,
 			preservesSelection: true,
-			lensAdder: lensAdderFactory(currentScene),
+			addLens: lensAdderFactory(currentScene),
 		}),
 	);
 	const prismTool = registerTool(
@@ -62,9 +62,9 @@ if (ctx) {
 			id: "prism",
 			displayName: "Prism Tool",
 			displayDescription: "Place prisms. Pick points to define the base shape.",
-			hlp: renderer.getToolHelper(),
+			hlp: renderer.getCanvasInteractionHelper(),
 			preservesSelection: true,
-			curveAdder: curveAdderFactory(currentScene),
+			addCurve: curveAdderFactory(currentScene),
 		}),
 	);
 

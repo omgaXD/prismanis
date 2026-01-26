@@ -17,8 +17,8 @@ const DEFAULT_FILL_COLOR = "#ffffff88";
 
 type MousePositionGetter = (ev: MouseEvent) => Vec2;
 
-export type ToolHelper = {
-	mpg: MousePositionGetter;
+export type CanvasInteractionHelper = {
+	getMousePosition: MousePositionGetter;
 	registerMouseUpListener: (listener: (ev: MouseEvent) => void) => void;
 	registerMouseDownListener: (listener: (ev: MouseEvent) => void) => void;
 	registerMouseMoveListener: (listener: (ev: MouseEvent) => void) => void;
@@ -136,9 +136,9 @@ export class Renderer {
 		};
 	}
 
-	getToolHelper(): ToolHelper {
+	getCanvasInteractionHelper(): CanvasInteractionHelper {
 		return {
-			mpg: this.mousePositionFactory(),
+			getMousePosition: this.mousePositionFactory(),
 			registerMouseUpListener: (listener: (ev: MouseEvent) => void) => {
 				this.canvas.addEventListener("mouseup", listener);
 			},

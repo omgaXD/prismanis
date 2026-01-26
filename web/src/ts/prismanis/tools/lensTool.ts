@@ -1,14 +1,14 @@
 import { LensAdder } from "../entities/sceneObjects";
 import { Lens, calculateWidth } from "../math/lensHelpers";
 import { Vec2 } from "../primitives";
-import { ToolHelper } from "../render";
+import { CanvasInteractionHelper } from "../render";
 import { Scene } from "../entities/scene";
 import { AbstractTool, BaseToolOptions } from "./tool";
 
 type LensToolOptions = BaseToolOptions & {
-	hlp: ToolHelper;
+	hlp: CanvasInteractionHelper;
 	scene: Scene;
-	lensAdder: LensAdder;
+	addLens: LensAdder;
 };
 
 export type PreviewLens = {
@@ -52,7 +52,7 @@ export class LensTool extends AbstractTool {
 			if (this.state === "idle") {
 				this.state = "rectangle";
 				this.reasonableDrag = false;
-				this.fixedPoint = this.o.hlp.mpg(e);
+				this.fixedPoint = this.o.hlp.getMousePosition(e);
 				this.previewLens = {
 					lens: {
 						middleExtraThickness: 0,
@@ -60,26 +60,26 @@ export class LensTool extends AbstractTool {
 						r2: Infinity,
 					},
 					height: 0,
-					topLeft: this.o.hlp.mpg(e),
+					topLeft: this.o.hlp.getMousePosition(e),
 				};
 			} else if (this.state === "rectangle") {
-				this.adjustPreviewRect(this.o.hlp.mpg(e));
+				this.adjustPreviewRect(this.o.hlp.getMousePosition(e));
 				this.state = "firstRadius";
 			} else if (this.state === "firstRadius") {
-				const r1 = this.getRadius1(this.o.hlp.mpg(e));
+				const r1 = this.getRadius1(this.o.hlp.getMousePosition(e));
 				if (r1 !== null && this.previewLens) {
 					this.previewLens.lens.r1 = r1;
 					this.state = "secondRadius";
 				}
 			} else if (this.state === "secondRadius") {
-				const r2 = this.getRadius2(this.o.hlp.mpg(e));
+				const r2 = this.getRadius2(this.o.hlp.getMousePosition(e));
 				if (r2 !== null && this.previewLens) {
 					this.previewLens.lens.r2 = r2;
 					const w = calculateWidth(this.previewLens.lens, this.previewLens.height);
 					const offsetX = (w.leftArc - w.rightArc) / 2;
 					const center = this.getCenter();
 					center!.x -= offsetX;
-					this.o.lensAdder(this.previewLens!.lens, center!, this.previewLens!.height);
+					this.o.addLens(this.previewLens!.lens, center!, this.previewLens!.height);
 					this.previewLens = null;
 					this.state = "idle";
 				}
@@ -99,14 +99,14 @@ export class LensTool extends AbstractTool {
 		this.o.hlp.registerMouseMoveListener((e) => {
 			if (this.isEnabled() === false) return;
 			if (this.state === "rectangle") {
-				this.adjustPreviewRect(this.o.hlp.mpg(e));
+				this.adjustPreviewRect(this.o.hlp.getMousePosition(e));
 			} else if (this.state === "firstRadius") {
 				// Update preview for radius 1
-				const r1 = this.getRadius1(this.o.hlp.mpg(e)) ?? Infinity;
+				const r1 = this.getRadius1(this.o.hlp.getMousePosition(e)) ?? Infinity;
 				this.previewLens!.lens.r1 = r1;
 			} else if (this.state === "secondRadius") {
 				// Update preview for radius 2
-				const r2 = this.getRadius2(this.o.hlp.mpg(e)) ?? Infinity;
+				const r2 = this.getRadius2(this.o.hlp.getMousePosition(e)) ?? Infinity;
 				this.previewLens!.lens.r2 = r2;
 			}
 		});

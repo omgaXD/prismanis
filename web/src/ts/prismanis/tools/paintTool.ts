@@ -1,11 +1,11 @@
 import { dist } from "../math/geometry";
 import { Curve } from "../primitives";
-import { ToolHelper } from "../render";
+import { CanvasInteractionHelper } from "../render";
 import { ToolSettingSlider } from "../entities/toolSettings";
 import { AbstractTool, BaseToolOptions } from "./tool";
 
 export type PaintToolOptions = BaseToolOptions & {
-	hlp: ToolHelper;
+	hlp: CanvasInteractionHelper;
 	onCurveClosed?: (curve: Curve) => void;
 };
 
@@ -86,7 +86,7 @@ export class PaintTool extends AbstractTool {
 	addPoint(event: MouseEvent) {
 		if (!this.isEnabled()) return;
 		if (!this.cur) return;
-		const point = this.o.hlp.mpg(event);
+		const point = this.o.hlp.getMousePosition(event);
 		if (this.cur.points.length === 0) {
 			this.cur.points.push(point);
 			return;

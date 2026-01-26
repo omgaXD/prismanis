@@ -1,12 +1,12 @@
 import { CurveAdder } from "../entities/sceneObjects";
 import { ToolSettingSelect, ToolSettingSnapAngle } from "../entities/toolSettings";
 import { Curve, Vec2 } from "../primitives";
-import { ToolHelper } from "../render";
+import { CanvasInteractionHelper } from "../render";
 import { AbstractTool, BaseToolOptions } from "./tool";
 
 type PrismToolOptions = BaseToolOptions & {
-	hlp: ToolHelper;
-	curveAdder: CurveAdder;
+	hlp: CanvasInteractionHelper;
+	addCurve: CurveAdder;
 };
 
 const RIGHT_TRIANGLE: Curve = {
@@ -110,7 +110,7 @@ export class PrismTool extends AbstractTool {
 
 	private onMouseMove(e: MouseEvent): void {
 		if (!this.isEnabled()) return;
-		const pos = this.o.hlp.mpg(e);
+		const pos = this.o.hlp.getMousePosition(e);
 		if (this.state === "idle") {
 			this.fixedAt = pos;
 			this.fixedAt2 = { x: pos.x + 100, y: pos.y + 100 };
@@ -158,8 +158,8 @@ export class PrismTool extends AbstractTool {
 				})),
 			};
 			if (this.state === "rotate" && this.fixedAt3) {
-                const centerX = (this.fixedAt.x + this.fixedAt2.x) / 2;
-                const centerY = (this.fixedAt.y + this.fixedAt2.y) / 2;
+				const centerX = (this.fixedAt.x + this.fixedAt2.x) / 2;
+				const centerY = (this.fixedAt.y + this.fixedAt2.y) / 2;
 
 				let angle = Math.atan2(this.fixedAt3.y - centerY, this.fixedAt3.x - centerX);
 				if (this.snapAngle > 0) {
@@ -169,18 +169,18 @@ export class PrismTool extends AbstractTool {
 				}
 				const cosA = Math.cos(angle);
 				const sinA = Math.sin(angle);
-				
-                // rotate around the center between fixedAt and fixedAt2
 
-                const rotatedPoints: Vec2[] = previewCurve.points.map((p) => {
-                    const translatedX = p.x - centerX;
-                    const translatedY = p.y - centerY;
-                    return {
-                        x: translatedX * cosA - translatedY * sinA + centerX,
-                        y: translatedX * sinA + translatedY * cosA + centerY,
-                    };
-                });
-                
+				// rotate around the center between fixedAt and fixedAt2
+
+				const rotatedPoints: Vec2[] = previewCurve.points.map((p) => {
+					const translatedX = p.x - centerX;
+					const translatedY = p.y - centerY;
+					return {
+						x: translatedX * cosA - translatedY * sinA + centerX,
+						y: translatedX * sinA + translatedY * cosA + centerY,
+					};
+				});
+
 				previewCurve.points = rotatedPoints;
 			}
 			return previewCurve;
@@ -192,7 +192,7 @@ export class PrismTool extends AbstractTool {
 	private createPrism() {
 		const previewCurve = this.previewPrism();
 		if (previewCurve) {
-			this.o.curveAdder(previewCurve);
+			this.o.addCurve(previewCurve);
 		}
 	}
 
