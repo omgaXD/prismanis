@@ -113,7 +113,7 @@ export class ToolSettingSlider extends ToolSetting<number> {
 	}
 }
 
-export class ToolSettingSelect<T> extends ToolSetting<string> {
+export class ToolSettingSelect extends ToolSetting<string> {
 	options: { value: string; displayName: string }[];
 
 	constructor(config: {
