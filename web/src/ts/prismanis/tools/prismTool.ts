@@ -1,5 +1,5 @@
 import { CurveAdder } from "../entities/sceneObjects";
-import { ToolSettingSelect, ToolSettingSnapAngle } from "../entities/toolSettings";
+import { GLOBAL_SNAP_ANGLE_TOOL_SETTING, ToolSettingSelect, ToolSettingSnapAngle } from "../entities/toolSettings";
 import { Curve, Vec2 } from "../primitives";
 import { CanvasInteractionHelper } from "../render";
 import { AbstractTool, BaseToolOptions } from "./tool";
@@ -58,9 +58,7 @@ export class PrismTool extends AbstractTool {
 		this.o.hlp.registerEscapeListener(() => this.onEscape());
 
 		this.registerSetting(
-			new ToolSettingSnapAngle({
-				id: "prism-tool-snap-angle",
-			}),
+			GLOBAL_SNAP_ANGLE_TOOL_SETTING,
 			(val) => {
 				this.snapAngle = val * (Math.PI / 180);
 			},

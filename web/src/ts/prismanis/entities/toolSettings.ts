@@ -151,3 +151,6 @@ export class ToolSettingSnapAngle extends ToolSetting<number> {
 		return value > 0 && value <= 90 && 90 % value === 0;
 	}
 }
+
+
+export const GLOBAL_SNAP_ANGLE_TOOL_SETTING = new ToolSettingSnapAngle({ id: "global-snap-angle" });

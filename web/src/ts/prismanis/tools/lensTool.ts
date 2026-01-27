@@ -4,7 +4,7 @@ import { Vec2 } from "../primitives";
 import { CanvasInteractionHelper } from "../render";
 import { Scene } from "../entities/scene";
 import { AbstractTool, BaseToolOptions } from "./tool";
-import { ToolSettingSnapAngle } from "../entities/toolSettings";
+import { GLOBAL_SNAP_ANGLE_TOOL_SETTING, ToolSettingSnapAngle } from "../entities/toolSettings";
 
 type LensToolOptions = BaseToolOptions & {
 	hlp: CanvasInteractionHelper;
@@ -51,9 +51,7 @@ export class LensTool extends AbstractTool {
 		this.o.hlp.registerMouseMoveListener((e) => this.onMouseMove(e));
 		this.o.hlp.registerMouseUpListener((e) => this.onMouseUp(e));
 		this.registerSetting(
-			new ToolSettingSnapAngle({
-				id: "lens-tool-snap-angle",
-			}),
+			GLOBAL_SNAP_ANGLE_TOOL_SETTING,
 			(newVal) => {
 				this.snapAngle = newVal * (Math.PI / 180);
 			},

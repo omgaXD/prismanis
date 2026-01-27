@@ -3,7 +3,7 @@ import { CanvasInteractionHelper } from "../render";
 import { Scene } from "../entities/scene";
 import { AbstractTool, BaseToolOptions } from "./tool";
 import { Rect, Vec2 } from "../primitives";
-import { ToolSettingSnapAngle } from "../entities/toolSettings";
+import { GLOBAL_SNAP_ANGLE_TOOL_SETTING, ToolSettingSnapAngle } from "../entities/toolSettings";
 
 export type TransformToolOptions = BaseToolOptions & {
 	hlp: CanvasInteractionHelper;
@@ -41,7 +41,7 @@ export class TransformTool extends AbstractTool {
 		this.o.hlp.registerMouseDownListener(this.onMouseDown.bind(this));
 		this.o.hlp.registerMouseUpListener(this.onMouseUp.bind(this));
 		this.o.hlp.registerMouseMoveListener(this.onMouseMove.bind(this));
-		this.registerSetting(new ToolSettingSnapAngle({ id: "transform-tool-snap-angle" }), (newVal) => {
+		this.registerSetting(GLOBAL_SNAP_ANGLE_TOOL_SETTING, (newVal) => {
 			this.snapAngle = newVal * (Math.PI / 180);
 		});
 	}

@@ -26,6 +26,15 @@ export const EXAGGERATED_GLASS_MATERIAL: Material = {
     fillColor: "rgba(135,206,235,0.2)",
 };
 
+export const MIRROR_MATERIAL: Material = {
+    name: "Mirror",
+    
+    A: 0,
+    B: 0,
+    strokeColor: "rgba(255,255,255,1)",
+    fillColor: "rgba(200,200,200,1)",
+};
+
 export const WATER_MATERIAL: Material = {
     name: "Water",
 
