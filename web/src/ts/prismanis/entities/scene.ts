@@ -33,15 +33,6 @@ export class Scene {
 	private sceneObjectChangedListeners: ((event: SceneObjectEvent) => void)[] = [];
 
 	constructor() {
-		curveAdderFactory(this)({
-			isClosed: true,
-			points: [
-				{ x: 450, y: 420 },
-				{ x: 350, y: 700 },
-				{ x: 700, y: 700 },
-				{ x: 600, y: 420 },
-			]
-		})
 	}
 
 	addListener<K extends keyof EventMap>(type: K, listener: (event: EventMap[K]) => void) {
