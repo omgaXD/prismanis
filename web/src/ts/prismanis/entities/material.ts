@@ -13,8 +13,8 @@ export const GLASS_MATERIAL: Material = {
 
     A: 1.5046,
     B: 0.00420,
-    strokeColor: "rgba(135,206,235,0.8)",
-    fillColor: "rgba(135,206,235,0.2)",
+    strokeColor: "rgba(197,216,235,0.8)",
+    fillColor: "rgba(197,216,235,0.2)",
 };
 
 export const EXAGGERATED_GLASS_MATERIAL: Material = {
@@ -22,8 +22,8 @@ export const EXAGGERATED_GLASS_MATERIAL: Material = {
 
     A: 1.5,
     B: 4000,
-    strokeColor: "rgba(135,206,235,0.8)",
-    fillColor: "rgba(135,206,235,0.2)",
+    strokeColor: "rgba(207,226,255,0.9)",
+    fillColor: "rgba(197,216,255,0.2)",
 };
 
 export const MIRROR_MATERIAL: Material = {
