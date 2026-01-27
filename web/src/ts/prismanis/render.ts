@@ -2,7 +2,7 @@ import { Scene, Transform } from "./entities/scene";
 import { SceneCurveObject, SceneLensObject, SceneLightObject } from "./entities/sceneObjects";
 import { wavelengthToRGB } from "./math/colorPhysics";
 import { calculateWidth } from "./math/lensHelpers";
-import { bake } from "./math/raycasting";
+import { bake } from "./math/raycasting/raycasting";
 import { Vec2, Curve, Rect } from "./primitives";
 import { LensTool, PreviewLens } from "./tools/lensTool";
 import { PaintTool } from "./tools/paintTool";

@@ -20,7 +20,7 @@ export const GLASS_MATERIAL: Material = {
 export const EXAGGERATED_GLASS_MATERIAL: Material = {
     name: "Exaggerated Glass",
 
-    A: 1.7,
+    A: 1.5,
     B: 4000,
     strokeColor: "rgba(135,206,235,0.8)",
     fillColor: "rgba(135,206,235,0.2)",

@@ -1,11 +1,11 @@
 import { RAY_CONFIGS, RayOptions } from "../entities/rayConfigs";
-import { normalizeVec2, rotateVec } from "../math/geometry";
+import { normalizeVec2 } from "../math/geometry";
 import { Curve, Vec2 } from "../primitives";
 import { CanvasInteractionHelper } from "../render";
 import { Scene } from "../entities/scene";
 import { ToolSettingSelect, ToolSettingSnapAngle } from "../entities/toolSettings";
 import { AbstractTool, BaseToolOptions } from "./tool";
-import { ray, rays } from "../math/raycasting";
+import { rays } from "../math/raycasting/raycasting";
 import { LightSourceAdder } from "../entities/sceneObjects";
 
 export type RaycastToolOptions = BaseToolOptions & {
