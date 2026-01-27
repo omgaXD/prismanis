@@ -50,12 +50,15 @@ export function switchToTool(tool: AbstractTool, currentScene: Scene) {
 	toolDescriptionElem.textContent = tool.displayDescription;
 	toolOptionsElem.innerHTML = "";
 
-	tool.settings.forEach((setting) => {
+	tool.settings.forEach((setting, i) => {
+		const separator = document.createElement("hr");
+		toolOptionsElem.appendChild(separator);
+
 		const optionDiv = document.createElement("div");
 		optionDiv.classList.add("tool-option");
 
 		const label = document.createElement("label");
-		label.classList.add("form-label");
+		label.classList.add("form-label", "mb-1");
 		label.textContent = setting.displayName;
 		label.htmlFor = `option-${setting.id}`;
 		optionDiv.appendChild(label);

@@ -1,14 +1,14 @@
 {{ define "content" }}
 <div class="relative grid grid-cols-[auto_1fr] h-full">
 	<aside class="relative sidebar rect border-t-0 border-l-0 border-b-0 h-full flex flex-col w-(--sidebar-width)">
-		<section class="min-h-48">
+		<section class="min-h-72 padded">
 			<h3 id="tool-name">Tool options</h3>
 			<!-- JS populated -->
 			<p id="tool-description" class="text-sm"></p>
-			<div id="tool-options" class="flex flex-col gap-3 mt-3"></div>
+			<div id="tool-options" class="flex flex-col gap-3 my-3"></div>
 		</section>
 		<section class="flex-1 flex flex-col">
-			<h3>Scene objects</h3>
+			<h3 class="padded">Scene objects</h3>
 			<!-- JS populated -->
 			<select multiple id="scene-objects" class="h-full"></select>
 		</section>

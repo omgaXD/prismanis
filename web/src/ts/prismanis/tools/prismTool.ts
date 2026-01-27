@@ -68,10 +68,6 @@ export class PrismTool extends AbstractTool {
 			this.snapAngle = val * (Math.PI / 180);
 		});
 
-		this.registerSetting(GLOBAL_MATERIAL_TOOL_SETTING, (val) => {
-			this.material = val;
-		});
-
 		this.registerSetting(
 			new ToolSettingSelect({
 				id: "prism-tool-type",
@@ -98,6 +94,10 @@ export class PrismTool extends AbstractTool {
 				}
 			},
 		);
+
+		this.registerSetting(GLOBAL_MATERIAL_TOOL_SETTING, (val) => {
+			this.material = val;
+		});
 	}
 
 	private onMouseDown(e: MouseEvent): void {

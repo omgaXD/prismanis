@@ -31,7 +31,6 @@
         padding: 0;
         
         section {
-            padding: var(--space-1) var(--space-3);
             &:not(:first-child) {
                 border-top: 1px solid var(--color-stone-700);
             }
@@ -49,6 +48,16 @@
             background-color: var(--color-blue-800);
             border-color: var(--color-blue-400);
         }
+    }
+
+    hr {
+        border: none;
+        border-top: 1px dotted var(--color-stone-700);
+        margin: var(--space-1) 0;
+    }
+
+    .padded {
+        padding: var(--space-1) var(--space-3);
     }
 
     .form-label {
