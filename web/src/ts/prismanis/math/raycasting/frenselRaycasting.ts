@@ -32,7 +32,8 @@ function getABfor(objects: (SceneObject & WithMaterial)[]): { A: number; B: numb
     }
     let A = 0, B = 0;
     for (const obj of objects) {
-        if (!obj.material) continue;
+        if (!obj.hasMaterial) continue;
+        if (!obj.material.overlaps) continue;
         A += obj.material.A;
         B += obj.material.B;
     }
