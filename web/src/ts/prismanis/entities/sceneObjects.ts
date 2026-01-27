@@ -4,9 +4,9 @@ import { Scene, Transform } from "./scene";
 import { EXAGGERATED_GLASS_MATERIAL, Material } from "./material";
 import { RayOptions } from "./rayConfigs";
 
-export type CurveAdder = (curve: Curve) => SceneCurveObject;
+export type CurveAdder = (curve: Curve, material?: Material) => SceneCurveObject;
 export function curveAdderFactory(scene: Scene): CurveAdder {
-	return function (curve: Curve) {
+	return function (curve: Curve, material?: Material) {
 		// Calculate bounding box
 		let minX = Infinity,
 			minY = Infinity,
@@ -35,7 +35,7 @@ export function curveAdderFactory(scene: Scene): CurveAdder {
 			type: "curve",
 			curve: curve,
 			transform: transform,
-			material: EXAGGERATED_GLASS_MATERIAL,
+			material: material ?? EXAGGERATED_GLASS_MATERIAL,
 			hasMaterial: true,
 		};
 
@@ -44,9 +44,15 @@ export function curveAdderFactory(scene: Scene): CurveAdder {
 	};
 }
 
-export type LensAdder = (lens: Lens, position: Vec2, height: number, rotationRad: number) => SceneLensObject;
+export type LensAdder = (
+	lens: Lens,
+	position: Vec2,
+	height: number,
+	rotationRad: number,
+	material?: Material,
+) => SceneLensObject;
 export function lensAdderFactory(scene: Scene): LensAdder {
-	return function (lens: Lens, position: Vec2, height: number, rotationRad: number) {
+	return function (lens: Lens, position: Vec2, height: number, rotationRad: number, material?: Material) {
 		const { totalWidth, leftArc, rightArc } = calculateWidth(lens, height);
 		console.log(totalWidth, leftArc, rightArc);
 		const transform = new Transform({ x: position.x, y: position.y }, rotationRad, {
@@ -59,7 +65,7 @@ export function lensAdderFactory(scene: Scene): LensAdder {
 			type: "lens",
 			lens: lens,
 			transform: transform,
-			material: EXAGGERATED_GLASS_MATERIAL,
+			material: material ?? EXAGGERATED_GLASS_MATERIAL,
 			hasMaterial: true,
 		};
 

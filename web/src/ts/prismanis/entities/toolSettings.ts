@@ -1,3 +1,5 @@
+import { EXAGGERATED_GLASS_MATERIAL, Material, MATERIALS } from "./material";
+
 export abstract class ToolSetting<T> {
 	readonly id: string;
 	readonly displayName: string;
@@ -152,5 +154,22 @@ export class ToolSettingSnapAngle extends ToolSetting<number> {
 	}
 }
 
+export class ToolSettingMaterial extends ToolSetting<Material> {
+	constructor(config: {
+		id: string;
+	}) {
+		super({
+			id: config.id,
+			displayName: "Material",
+			value: EXAGGERATED_GLASS_MATERIAL,
+			default: EXAGGERATED_GLASS_MATERIAL,
+		});
+	}
+
+	validate(value: Material): boolean {
+		return MATERIALS.includes(value);
+	}
+}
 
 export const GLOBAL_SNAP_ANGLE_TOOL_SETTING = new ToolSettingSnapAngle({ id: "global-snap-angle" });
+export const GLOBAL_MATERIAL_TOOL_SETTING = new ToolSettingMaterial({ id: "global-material" });

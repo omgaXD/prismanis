@@ -26,45 +26,38 @@ function whoContainsPoint(point: Vec2, scene: Scene): (SceneObject & WithMateria
 	return containingObjects;
 }
 
+function getABfor(objects: (SceneObject & WithMaterial)[]): { A: number; B: number } {
+    if (objects.length === 0) {
+        return AIR_MATERIAL;
+    }
+    let A = 0, B = 0;
+    for (const obj of objects) {
+        if (!obj.material) continue;
+        A += obj.material.A;
+        B += obj.material.B;
+    }
+    if (A === 0 && B === 0) {
+        return objects[objects.length-1].material;
+    } else {
+        return { A, B };
+    }
+}
+
 function exitOrEnter(
 	insideObjects: (SceneObject & WithMaterial)[],
 	obj: SceneObject & WithMaterial,
 	wavelength: number,
 ): { n1: number; n2: number; action: "entering" | "exiting" } {
-	let A1 = 0,
-		B1 = 0;
-	insideObjects.forEach((o) => {
-		A1 += o.material.A;
-		B1 += o.material.B;
-	});
-	if (insideObjects.length === 0) {
-		A1 = AIR_MATERIAL.A;
-		B1 = AIR_MATERIAL.B;
-	}
-	const n1 = getRefractiveIndex({ A: A1, B: B1 }, wavelength);
+	const n1 = getRefractiveIndex(getABfor(insideObjects), wavelength);
 
 	if (insideObjects.find((o) => o.id === obj.id)) {
-		if (insideObjects.length === 1) {
-			// exiting to air
-			const n2 = getRefractiveIndex(AIR_MATERIAL, wavelength);
-			return { n1, n2, action: "exiting" };
-		}
-		const A2 = A1 - obj.material.A;
-		const B2 = B1 - obj.material.B;
-		const n2 = getRefractiveIndex({ A: A2, B: B2 }, wavelength);
+		const without = insideObjects.filter((o) => o.id !== obj.id);
+		const n2 = getRefractiveIndex(getABfor(without), wavelength);
 		return { n1, n2, action: "exiting" };
 	} else {
-		if (insideObjects.length === 0) {
-			// entering from air
-			const A2 = obj.material.A;
-			const B2 = obj.material.B;
-			const n2 = getRefractiveIndex({ A: A2, B: B2 }, wavelength);
-			return { n1, n2, action: "entering" };
-		}
-		const A2 = A1 + obj.material.A;
-		const B2 = B1 + obj.material.B;
-		const n2 = getRefractiveIndex({ A: A2, B: B2 }, wavelength);
-		return { n1, n2, action: "entering" };
+        const withObj = [...insideObjects, obj];
+        const n2 = getRefractiveIndex(getABfor(withObj), wavelength);
+        return { n1, n2, action: "entering" };
 	}
 }
 

@@ -1,5 +1,11 @@
+import { Material } from "../entities/material";
 import { CurveAdder } from "../entities/sceneObjects";
-import { GLOBAL_SNAP_ANGLE_TOOL_SETTING, ToolSettingSelect, ToolSettingSnapAngle } from "../entities/toolSettings";
+import {
+	GLOBAL_MATERIAL_TOOL_SETTING,
+	GLOBAL_SNAP_ANGLE_TOOL_SETTING,
+	ToolSettingSelect,
+	ToolSettingSnapAngle,
+} from "../entities/toolSettings";
 import { Curve, Vec2 } from "../primitives";
 import { CanvasInteractionHelper } from "../render";
 import { AbstractTool, BaseToolOptions } from "./tool";
@@ -45,6 +51,7 @@ export class PrismTool extends AbstractTool {
 	reasonableDrag: boolean = false;
 	snapAngle: number = 0;
 	curve: Curve = RIGHT_TRIANGLE;
+	material: Material | null = null;
 
 	constructor(private o: PrismToolOptions) {
 		super(o);
@@ -57,12 +64,13 @@ export class PrismTool extends AbstractTool {
 		this.o.hlp.registerMouseUpListener((e) => this.onMouseUp(e));
 		this.o.hlp.registerEscapeListener(() => this.onEscape());
 
-		this.registerSetting(
-			GLOBAL_SNAP_ANGLE_TOOL_SETTING,
-			(val) => {
-				this.snapAngle = val * (Math.PI / 180);
-			},
-		);
+		this.registerSetting(GLOBAL_SNAP_ANGLE_TOOL_SETTING, (val) => {
+			this.snapAngle = val * (Math.PI / 180);
+		});
+
+		this.registerSetting(GLOBAL_MATERIAL_TOOL_SETTING, (val) => {
+			this.material = val;
+		});
 
 		this.registerSetting(
 			new ToolSettingSelect({
@@ -127,7 +135,10 @@ export class PrismTool extends AbstractTool {
 				return;
 			}
 			this.fixedAt2 = pos;
-			if (this.fixedAt && (Math.abs(this.fixedAt2.x - this.fixedAt.x) > 5 || Math.abs(this.fixedAt2.y - this.fixedAt.y) > 5)) {
+			if (
+				this.fixedAt &&
+				(Math.abs(this.fixedAt2.x - this.fixedAt.x) > 5 || Math.abs(this.fixedAt2.y - this.fixedAt.y) > 5)
+			) {
 				this.reasonableDrag = true;
 			}
 		} else if (this.state === "rotate") {
@@ -198,7 +209,7 @@ export class PrismTool extends AbstractTool {
 	private createPrism() {
 		const previewCurve = this.previewPrism();
 		if (previewCurve) {
-			this.o.addCurve(previewCurve);
+			this.o.addCurve(previewCurve, this.material || undefined);
 		}
 	}
 

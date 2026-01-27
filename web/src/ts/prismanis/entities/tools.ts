@@ -1,7 +1,13 @@
 import { AbstractTool, registeredTools } from "../tools/tool";
+import { MATERIALS } from "./material";
 import { Scene } from "./scene";
-import { ToolSettingSelect, ToolSettingNumber, ToolSettingSlider, ToolSettingSnapAngle } from "./toolSettings";
-
+import {
+	ToolSettingSelect,
+	ToolSettingNumber,
+	ToolSettingSlider,
+	ToolSettingSnapAngle,
+	ToolSettingMaterial,
+} from "./toolSettings";
 
 const toolNameElem = document.getElementById("tool-name") as HTMLHeadingElement;
 const toolDescriptionElem = document.getElementById("tool-description") as HTMLParagraphElement;
@@ -127,6 +133,44 @@ export function switchToTool(tool: AbstractTool, currentScene: Scene) {
 				});
 
 				radioLabel.prepend(radioInput);
+				radioGroup.appendChild(radioLabel);
+			});
+			input = radioGroup;
+		} else if (setting instanceof ToolSettingMaterial) {
+			const radioGroup = document.createElement("div");
+			radioGroup.classList.add("grid", "grid-cols-3", "gap-2");
+			MATERIALS.forEach((mat) => {
+				const materialPreview = document.createElement("div");
+				materialPreview.classList.add("border-4", "rounded-full", "w-12", "h-12", "mb-1");
+				materialPreview.style.backgroundColor = mat.fillColor;
+				materialPreview.style.borderColor = mat.strokeColor;
+
+				const radioLabel = document.createElement("label");
+				radioLabel.className =
+					"round rect text-base px-1 hover-highlight checked-highlight flex flex-col items-center pt-2 h-24";
+
+				const radioInput = document.createElement("input");
+				radioInput.type = "radio";
+				radioInput.name = `material-selector`;
+				radioInput.value = mat.id;
+				radioInput.classList.add("sr-only");
+
+				if (setting.getValue().id === mat.id) {
+					radioInput.checked = true;
+				}
+				radioInput.addEventListener("change", () => {
+					if (radioInput.checked) {
+						setting.setValue(mat);
+					}
+				});
+
+				const span = document.createElement("span");
+				span.className = "text-xs";
+				span.textContent = mat.displayName;
+
+				radioLabel.appendChild(materialPreview);
+				radioLabel.appendChild(radioInput);
+				radioLabel.appendChild(span);
 				radioGroup.appendChild(radioLabel);
 			});
 			input = radioGroup;

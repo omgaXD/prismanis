@@ -4,7 +4,12 @@ import { Vec2 } from "../primitives";
 import { CanvasInteractionHelper } from "../render";
 import { Scene } from "../entities/scene";
 import { AbstractTool, BaseToolOptions } from "./tool";
-import { GLOBAL_SNAP_ANGLE_TOOL_SETTING, ToolSettingSnapAngle } from "../entities/toolSettings";
+import {
+	GLOBAL_MATERIAL_TOOL_SETTING,
+	GLOBAL_SNAP_ANGLE_TOOL_SETTING,
+	ToolSettingSnapAngle,
+} from "../entities/toolSettings";
+import { Material } from "../entities/material";
 
 type LensToolOptions = BaseToolOptions & {
 	hlp: CanvasInteractionHelper;
@@ -28,6 +33,7 @@ export class LensTool extends AbstractTool {
 	fixedAt2: Vec2 | null = null;
 	reasonableDrag: boolean = false;
 	snapAngle: number = 0;
+	material: Material | null = null;
 
 	constructor(private o: LensToolOptions) {
 		super(o);
@@ -50,12 +56,12 @@ export class LensTool extends AbstractTool {
 		this.o.hlp.registerMouseDownListener((e) => this.onMouseDown(e));
 		this.o.hlp.registerMouseMoveListener((e) => this.onMouseMove(e));
 		this.o.hlp.registerMouseUpListener((e) => this.onMouseUp(e));
-		this.registerSetting(
-			GLOBAL_SNAP_ANGLE_TOOL_SETTING,
-			(newVal) => {
-				this.snapAngle = newVal * (Math.PI / 180);
-			},
-		);
+		this.registerSetting(GLOBAL_SNAP_ANGLE_TOOL_SETTING, (newVal) => {
+			this.snapAngle = newVal * (Math.PI / 180);
+		});
+		this.registerSetting(GLOBAL_MATERIAL_TOOL_SETTING, (val) => {
+			this.material = val;
+		});
 	}
 
 	private onMouseDown(e: MouseEvent): void {
@@ -71,7 +77,7 @@ export class LensTool extends AbstractTool {
 			this.state = "secondRadius";
 		} else if (this.state === "secondRadius") {
 			this.state = "rotate";
-			this.fixedAt2 =	 this.o.hlp.getMousePosition(e);
+			this.fixedAt2 = this.o.hlp.getMousePosition(e);
 		} else if (this.state === "rotate") {
 			const center = this.getCenter();
 			if (!this.previewLens || !center) return;
@@ -89,6 +95,7 @@ export class LensTool extends AbstractTool {
 				},
 				this.previewLens.height,
 				this.previewLens.rotationRad,
+				this.material || undefined,
 			);
 			this.state = "idle";
 			this.previewLens = null;

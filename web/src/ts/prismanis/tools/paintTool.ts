@@ -1,18 +1,21 @@
 import { dist } from "../math/geometry";
 import { Curve } from "../primitives";
 import { CanvasInteractionHelper } from "../render";
-import { ToolSettingSlider } from "../entities/toolSettings";
+import { GLOBAL_MATERIAL_TOOL_SETTING, ToolSettingSlider } from "../entities/toolSettings";
 import { AbstractTool, BaseToolOptions } from "./tool";
+import { Material } from "../entities/material";
+import { CurveAdder } from "../entities/sceneObjects";
 
 export type PaintToolOptions = BaseToolOptions & {
 	hlp: CanvasInteractionHelper;
-	onCurveClosed?: (curve: Curve) => void;
+	addCurve: CurveAdder;
 };
 
 export class PaintTool extends AbstractTool {
 	cur: Curve | null = null;
 	closedDistanceThreshold: number | null = null;
 	drawingThreshold: number | null = null;
+	material: Material | null = null;
 
 	constructor(private o: PaintToolOptions) {
 		super(o);
@@ -33,7 +36,7 @@ export class PaintTool extends AbstractTool {
 			}
 
 			if (this.cur.isClosed) {
-				this.o.onCurveClosed?.(this.cur);
+				this.o.addCurve(this.cur, this.material || undefined);
 			}
 
 			this.cur = null;
@@ -64,6 +67,10 @@ export class PaintTool extends AbstractTool {
 				this.drawingThreshold = newVal;
 			},
 		);
+
+		this.registerSetting(GLOBAL_MATERIAL_TOOL_SETTING, (val) => {
+			this.material = val;
+		});
 	}
 
 	clear() {

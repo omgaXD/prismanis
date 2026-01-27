@@ -23,7 +23,7 @@ if (ctx) {
 			displayName: "Paint Tool",
 			displayDescription: "Draw freeform closed curves. Open curves will dissapear.",
 			hlp: renderer.getCanvasInteractionHelper(),
-			onCurveClosed: curveAdderFactory(currentScene),
+			addCurve: curveAdderFactory(currentScene),
 		}),
 	);
 	registerTool(
