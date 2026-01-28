@@ -3,6 +3,7 @@ import { Curve, Vec2 } from "../primitives";
 import { Scene, Transform } from "./scene";
 import { EXAGGERATED_GLASS_MATERIAL, Material } from "./material";
 import { RayOptions } from "./rayConfigs";
+import uuid from "../uuid";
 
 export type CurveAdder = (curve: Curve, material?: Material) => SceneCurveObject;
 export function curveAdderFactory(scene: Scene): CurveAdder {
@@ -31,7 +32,7 @@ export function curveAdderFactory(scene: Scene): CurveAdder {
 		});
 
 		const sceneObject: SceneCurveObject = {
-			id: crypto.randomUUID(),
+			id: uuid(),
 			type: "curve",
 			curve: curve,
 			transform: transform,
@@ -61,7 +62,7 @@ export function lensAdderFactory(scene: Scene): LensAdder {
 		});
 
 		const sceneObject: SceneLensObject = {
-			id: crypto.randomUUID(),
+			id: uuid(),
 			type: "lens",
 			lens: lens,
 			transform: transform,
@@ -84,7 +85,7 @@ export function lightSourceAdderFactory(scene: Scene): LightSourceAdder {
 		});
 
 		const sceneObject: SceneLightObject = {
-			id: crypto.randomUUID(),
+			id: uuid(),
 			type: "light",
 			rayConfig: rayConfig,
 			transform: transform,
