@@ -156,8 +156,7 @@ export class LensTool extends AbstractTool {
 		const deltaAngle = angle - initialAngle;
 		let snappedAngle = deltaAngle;
 		if (this.snapAngle > 0) {
-			const snapRad = this.snapAngle;
-			snappedAngle = Math.round(deltaAngle / snapRad) * snapRad;
+			snappedAngle = Math.round(deltaAngle / this.snapAngle) * this.snapAngle;
 		}
 		this.previewLens.rotationRad = snappedAngle;
 	}

@@ -177,15 +177,15 @@ export class PrismTool extends AbstractTool {
 			if (this.state === "rotate" && this.fixedAt3) {
 				const centerX = (this.fixedAt.x + this.fixedAt2.x) / 2;
 				const centerY = (this.fixedAt.y + this.fixedAt2.y) / 2;
-
-				let angle = Math.atan2(this.fixedAt3.y - centerY, this.fixedAt3.x - centerX);
+				const initialAngle = Math.atan2(this.fixedAt2.y - centerY, this.fixedAt2.x - centerX);
+				const angle = Math.atan2(this.fixedAt3.y - centerY, this.fixedAt3.x - centerX);
+				const deltaAngle = angle - initialAngle;
+				let snappedAngle = deltaAngle;
 				if (this.snapAngle > 0) {
-					const snapRad = this.snapAngle;
-					const snappedAngle = Math.round(angle / snapRad) * snapRad;
-					angle = snappedAngle;
+					snappedAngle = Math.round(snappedAngle / this.snapAngle) * this.snapAngle;
 				}
-				const cosA = Math.cos(angle);
-				const sinA = Math.sin(angle);
+				const cosA = Math.cos(snappedAngle);
+				const sinA = Math.sin(snappedAngle);
 
 				// rotate around the center between fixedAt and fixedAt2
 
