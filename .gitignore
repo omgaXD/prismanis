@@ -1,2 +1,3 @@
 web/out
 node_modules
+.env

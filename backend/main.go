@@ -41,6 +41,10 @@ func main() {
 	// 1. Configuration
 	// Determine if we are in dev mode (simplification: assume dev if env var not set)
 	env := os.Getenv("APP_ENV")
+	certFile := os.Getenv("CERT_FILE")
+	keyFile := os.Getenv("KEY_FILE")
+	domainName := os.Getenv("DOMAIN_NAME")
+
 	config.IsDev = env != "production"
 	config.ViteOrigin = "http://localhost:5173" // Default Vite port
 
@@ -84,12 +88,25 @@ func main() {
 	}
 
 	// 3. Start Server
-	port := ":8080"
-	fmt.Printf("Server starting on http://localhost%s (Mode: %s)\n", port, map[bool]string{true: "Development", false: "Production"}[config.IsDev])
+	devPort := ":443"
+	fmt.Printf("Server starting on http://localhost%s (Mode: %s)\n", devPort, map[bool]string{true: "Development", false: "Production"}[config.IsDev])
 	if config.IsDev {
 		fmt.Printf("Ensure 'npm run dev' is running in another terminal.\n")
 	}
-	log.Fatal(http.ListenAndServe(port, nil))
+	if !config.IsDev && certFile != "" && keyFile != "" && domainName != "" {
+		// Redirect HTTP to HTTPS
+		go func() {
+			http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, "https://"+domainName+r.RequestURI, http.StatusMovedPermanently)
+			}))
+		}()
+		fmt.Printf("Running with TLS on https://%s\n", domainName)
+		log.Fatal(http.ListenAndServeTLS(":443", certFile, keyFile, nil))
+		return
+	} else {
+		fmt.Printf("Warning: TLS not configured, running over HTTP.\n")
+		log.Fatal(http.ListenAndServe(devPort, nil))
+	}
 }
 
 // registerPage is a helper to clean up main() and standardize page registration

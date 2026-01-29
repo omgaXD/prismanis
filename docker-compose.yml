@@ -1,0 +1,10 @@
+services:
+  main:
+    build: .
+    container_name: omgafoo_main
+    env_file:
+      - .env
+    ports:
+      - "443:8080"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
