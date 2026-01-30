@@ -1,0 +1,22 @@
+@layer components {
+    .tabs {
+        .tab-labels {
+            display: flex;
+        }
+        .tab-items>* {
+            display: none;
+        }
+        @define-mixin tab-label $index {
+            &:has(.tab-labels>*:nth-child($index)>input:checked) {
+                &>.tab-labels>*:nth-child($index) {
+                
+                }
+                &>.tab-items>*:nth-child($index) {
+                    display: block;
+                }
+            }
+        }
+        @mixin tab-label 1;
+        @mixin tab-label 2;
+    }
+}
