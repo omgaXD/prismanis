@@ -15,8 +15,13 @@ const toolOptionsElem = document.getElementById("tool-options") as HTMLDivElemen
 
 export function setupTools(currentScene: Scene) {
 	function adjustTool() {
-		const checkedInput = (document.querySelector('input[name="tool"]:checked') as HTMLInputElement).value;
-		const checkedTool = registeredTools.find((tool) => `toggle-${tool.id}` === checkedInput);
+		let checkedInput = (document.querySelector('input[name="tool"]:checked') as HTMLInputElement);
+		if (!checkedInput) {
+			// Check the topmost one
+			checkedInput = document.querySelector('input[name="tool"]') as HTMLInputElement;
+			checkedInput.checked = true;
+		}
+		const checkedTool = registeredTools.find((tool) => `toggle-${tool.id}` === checkedInput.value);
 		if (checkedTool) {
 			switchToTool(checkedTool, currentScene);
 		}
