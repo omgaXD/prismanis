@@ -88,7 +88,7 @@ func main() {
 	}
 
 	// 3. Start Server
-	devPort := ":443"
+	devPort := ":8080"
 	fmt.Printf("Server starting on http://localhost%s (Mode: %s)\n", devPort, map[bool]string{true: "Development", false: "Production"}[config.IsDev])
 	if config.IsDev {
 		fmt.Printf("Ensure 'npm run dev' is running in another terminal.\n")
