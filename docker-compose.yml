@@ -1,10 +1,13 @@
 services:
   main:
-    build: .
+    image: ${IMAGE}
     container_name: omgafoo_main
+    environment:
+      - APP_ENV=production
     env_file:
       - .env
     ports:
-      - "443:8080"
+      - "443:443"
+      - "80:80"
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
