@@ -63,5 +63,5 @@ jobs:
           script: |
             set -e
             cd ${{ secrets.DEPLOY_PATH }}
-            chmod +x ./${{ secrets.DEPLOY_SCRIPT }}
-            ./${{ secrets.DEPLOY_SCRIPT }} "${{ steps.meta.outputs.image }}"
+            chmod +x ./deploy
+            ./deploy "${{ steps.meta.outputs.image }}"
