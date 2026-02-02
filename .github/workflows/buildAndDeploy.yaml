@@ -63,4 +63,5 @@ jobs:
           script: |
             set -e
             chmod +x ~/${{ secrets.DEPLOY_SCRIPT }}
+            cd ~/${{ secrets.DEPLOY_SCRIPT }}/..
             ~/${{ secrets.DEPLOY_SCRIPT }} "${{ steps.meta.outputs.image }}"
