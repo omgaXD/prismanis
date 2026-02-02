@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+
+IMAGE="$1"
+
+if [ -z "$IMAGE" ]; then
+  echo "Usage: deploy.sh <image-ref>"
+  exit 1
+fi
+
+docker pull "$IMAGE"
+git pull
+docker compose up -d
