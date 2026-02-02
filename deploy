@@ -10,4 +10,5 @@ fi
 
 docker pull "$IMAGE"
 git pull
-docker compose up -d
+
+IMAGE="$1" docker compose up -d
