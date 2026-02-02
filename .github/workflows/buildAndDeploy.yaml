@@ -62,6 +62,6 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             set -e
-            chmod +x ~/${{ secrets.DEPLOY_SCRIPT }}
-            cd ~/${{ secrets.DEPLOY_SCRIPT }}/..
-            ~/${{ secrets.DEPLOY_SCRIPT }} "${{ steps.meta.outputs.image }}"
+            cd ${{ secrets.DEPLOY_PATH }}
+            chmod +x ./${{ secrets.DEPLOY_SCRIPT }}
+            ./${{ secrets.DEPLOY_SCRIPT }} "${{ steps.meta.outputs.image }}"
