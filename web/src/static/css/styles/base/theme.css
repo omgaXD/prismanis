@@ -41,7 +41,7 @@
                     height: 2px;
                     background-color: var(--color-blue-400);
                 }
-                &:hover {
+                &:hover, &:focus-visible {
                     background-size: calc(100% / var(--initial-breakpoint-size)) auto;
                     &::after {
                         transform: scaleX(1);
