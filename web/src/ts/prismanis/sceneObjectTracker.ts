@@ -7,12 +7,12 @@ const pointCountSpan = document.getElementById("point-count") as HTMLSpanElement
 export function trackSceneObjects(scene: Scene, switchToTransformTool: () => void) {
 	function addSceneObject(obj: SceneObject) {
 		const objOption = document.createElement("option");
-		objOption.classList.add("text-xs", "p-1", "hover:bg-blue-800", "cursor-pointer");
+		objOption.classList.add("hover:bg-blue-800", "cursor-pointer");
 		objOption.id = `scene-object-${obj.id}`;
 		objOption.value = obj.id;
 
 		const span = document.createElement("span");
-		span.classList.add("h-8", "flex", "items-center");
+		span.classList.add("block", "my-auto", "overflow-hidden", "text-ellipsis", "whitespace-nowrap");
 		span.textContent = `${obj.type} ${obj.id}`;
 		objOption.appendChild(span);
 

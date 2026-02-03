@@ -4,9 +4,11 @@
     }
 
     body {
-        font-size: var(--text-xl);
+        font-size: var(--text-base);
         background-color: var(--color-stone-900);
         color: var(--color-white);
+        font-family: 'Quicksand', monospace;
+        font-weight: 600;
 
         header {
             background-color: var(--color-stone-800);
@@ -54,8 +56,8 @@
     }
 
     h3 {
-        font-size: var(--text-sm);
-        margin-bottom: calc(var(--spacing) * 2);
+        font-size: var(--text-base);
+        margin-bottom: var(--space-1);
         font-weight: 700;
         text-transform: uppercase;
     }
@@ -88,8 +90,8 @@
 
     hr {
         border: none;
-        border-top: 1px dotted var(--color-stone-700);
-        margin: var(--space-1) 0;
+        border-top: 1px solid var(--color-stone-700);
+        margin: var(--space-2) 0;
     }
 
     .padded {
@@ -97,9 +99,11 @@
     }
 
     .form-label {
-        font-weight: 600;
+        font-weight: 700;
         display: block;
         font-size: var(--text-xs);
+        text-transform: uppercase;
+        color: var(--color-stone-400);
     }
 
     input[type="number"],
@@ -123,7 +127,9 @@
         height: auto;
         max-width: 100%;
         option {
-            padding: var(--space-2) var(--space-1);
+            padding: var(--space-1) var(--space-4);
+            overflow-x: hidden;
+            text-overflow: ellipsis;
             &:nth-child(2n) {
                 background-color: var(--color-stone-800);
             }
@@ -188,6 +194,12 @@
 
     .danger-text {
         color: var(--color-red-400);
+    }
+
+    .hint-text {
+        color: var(--color-stone-400);
+        font-size: var(--text-sm);
+        text-transform: lowercase;
     }
 
     :disabled {

@@ -40,7 +40,7 @@ if (ctx) {
 		new TransformTool({
 			id: "transform",
 			displayName: "Transform Tool",
-			displayDescription: "Select, move and rotate objects.",
+			displayDescription: "Select, move and rotate objects. [Shift] to select multiple.",
 			hlp: renderer.getCanvasInteractionHelper(),
 			scene: currentScene,
 			preservesSelection: true,
@@ -61,7 +61,7 @@ if (ctx) {
 		new PrismTool({
 			id: "prism",
 			displayName: "Prism Tool",
-			displayDescription: "Place prisms. Pick points to define the base shape.",
+			displayDescription: "Place prisms. Pick points to define the base shape. [Shift] for perfect aspect ratio.",
 			hlp: renderer.getCanvasInteractionHelper(),
 			preservesSelection: true,
 			addCurve: curveAdderFactory(currentScene),

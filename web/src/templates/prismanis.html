@@ -4,7 +4,10 @@
 		<section class="min-h-72 padded">
 			<h3 id="tool-name">Tool options</h3>
 			<!-- JS populated -->
-			<p id="tool-description" class="text-sm"></p>
+			<div class="flex items-center gap-2">
+				<i class="las la-info-circle text-2xl"></i>
+				<p id="tool-description" class="hint-text"></p>
+			</div>
 			<div id="tool-options" class="flex flex-col gap-3 my-3"></div>
 		</section>
 		<section class="flex-1 flex flex-col">
@@ -13,7 +16,9 @@
 			<select multiple id="scene-objects" class="h-full"></select>
 		</section>
 		<div class="toolbox absolute top-2 -right-2 translate-x-full flex flex-col gap-2">
-			<div class="flex flex-col gap-2 has-focus-visible:outline-blue-500 has-focus-visible:outline outline-offset-4 rounded-xl">
+			<div
+				class="flex flex-col gap-2 has-focus-visible:outline-blue-500 has-focus-visible:outline outline-offset-4 rounded-xl"
+			>
 				<label class="icon-btn default">
 					<i class="las la-mouse-pointer"></i>
 					<input type="radio" value="toggle-transform" name="tool" class="sr-only" />
@@ -35,7 +40,7 @@
 					<input type="radio" value="toggle-raycast" name="tool" class="sr-only" />
 				</label>
 			</div>
-			<hr class="w-2/3 mx-auto">
+			<hr class="w-2/3 mx-auto" />
 			<button class="icon-btn danger" id="clear-btn">
 				<i class="las la-trash"></i>
 			</button>
@@ -48,6 +53,6 @@
 		</div>
 	</aside>
 	<div class="flex-1 h-full"><canvas id="canvas"></canvas></div>
-	<p class="absolute top-0 right-1 text-xs">Point count: <span id="point-count">0</span></p>
+	<p class="absolute bottom-1 right-1 text-xs">Point count: <span id="point-count">0</span></p>
 </div>
 {{ end }}
