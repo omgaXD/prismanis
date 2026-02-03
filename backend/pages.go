@@ -48,6 +48,7 @@ func registerPage(path string, templateFiles []string, dataFunc DataProviderFunc
 			"ViteHead": generateViteTags("ts/main.ts"),
 			"IsDev":    config.IsDev,
 			"Page":     path,
+			"Protocol": r.URL.Scheme,
 			"Host":     r.Host,
 		}
 
