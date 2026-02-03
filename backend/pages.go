@@ -44,11 +44,16 @@ func registerPage(path string, templateFiles []string, dataFunc DataProviderFunc
 			return
 		}
 
-		data := map[string]interface{}{
+		protocol := "http"
+		if r.TLS != nil {
+			protocol = "https"
+		}
+
+		data := map[string]any{
 			"ViteHead": generateViteTags("ts/main.ts"),
 			"IsDev":    config.IsDev,
 			"Page":     path,
-			"Scheme": r.URL.Scheme,
+			"Protocol":   protocol,
 			"Host":     r.Host,
 		}
 
