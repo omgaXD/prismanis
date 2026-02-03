@@ -11,6 +11,41 @@
         header {
             background-color: var(--color-stone-800);
             border-bottom: 1px solid var(--color-stone-700);
+
+            a.pretty-link {
+                position: relative;
+                text-decoration: none;
+                font-weight: bold;
+                font-size: var(--text-base);
+                text-transform: lowercase;
+
+                background-clip: text;
+                --initial-breakpoint-size: 0.001;
+                --initial-breakpoint: calc(50% - var(--initial-breakpoint-size) * 50%);
+                background-image: linear-gradient(90deg, var(--color-white), var(--initial-breakpoint), var(--color-white), var(--initial-breakpoint), var(--color-blue-400), calc(100% - var(--initial-breakpoint)), var(--color-white), calc(100% - var(--initial-breakpoint)), var(--color-white));
+                background-size: 100% auto;
+                color: transparent;
+                background-position: center;
+                transition: background-size 0.3s ease;
+
+                &::after {
+                    content: "";
+                    position: absolute;
+                    left: 0;
+                    bottom: -2px;
+                    right: 0;
+                    transform: scaleX(0);
+                    transition: transform 0.3s ease;
+                    height: 2px;
+                    background-color: var(--color-blue-400);
+                }
+                &:hover {
+                    background-size: calc(100% / var(--initial-breakpoint-size)) auto;
+                    &::after {
+                        transform: scaleX(1);
+                    }
+                }
+            }
         }
     }
 
