@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 )
 
-
 type DataProviderFunc func(r *http.Request) map[string]interface{}
 
 type Page struct {
@@ -48,6 +47,7 @@ func registerPage(path string, templateFiles []string, dataFunc DataProviderFunc
 		data := map[string]interface{}{
 			"ViteHead": generateViteTags("ts/main.ts"),
 			"IsDev":    config.IsDev,
+			"Page":     path,
 		}
 
 		if dataFunc != nil {

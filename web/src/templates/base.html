@@ -3,16 +3,18 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel= "stylesheet" href= "https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css" >
-		{{ .ViteHead }}
-		{{ template "head" . }}
+		<link
+			rel="stylesheet"
+			href="https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css"
+		/>
+		{{ .ViteHead }} {{ template "head" . }}
 	</head>
 	<body>
 		<header>
 			<div class="right">
 				<img src="/static/assets/img/image.png" alt="Logo" class="logo" />
-				<a href="/" class="pretty-link">Index</a>
-				<a href="/prismanis" class="pretty-link">Prismanis</a>
+				<a href="/" class='pretty-link {{ if eq .Page "/" }} on-this-page {{ end }}'>Index</a>
+				<a href="/prismanis" class='pretty-link {{ if eq .Page "/prismanis" }} on-this-page {{ end }}'>Prismanis</a>
 			</div>
 			<div class="left">
 				<a href="https://github.com/omgaXD/omgafoo" target="_blank">

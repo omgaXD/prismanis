@@ -41,6 +41,15 @@
                     height: 2px;
                     background-color: var(--color-blue-400);
                 }
+                &.on-this-page {
+                    color: var(--color-purple-400);
+                    background-clip: none;
+                    background-image: none;
+                    &::after {
+                        background-color: var(--color-purple-400);
+                        transform: scaleX(1);
+                    }
+                }
                 &:hover, &:focus-visible {
                     background-size: calc(100% / var(--initial-breakpoint-size)) auto;
                     &::after {
