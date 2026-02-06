@@ -262,7 +262,7 @@ export function doMove(field: Field, move: Move): MoveResult {
 			if (tile.type === "player") {
 				if (!hasValidMoves(field, { x, y })) {
 					field.tiles[y][x] = { type: "empty", collectedBy: field.turnOf };
-					field.players[tile.side].collected += 1;
+					field.players[field.turnOf].collected += 1;
 				}
 			}
 		}
