@@ -9,13 +9,13 @@
 		</div>
 		<div id="field" class="font-mono gap-2 grid grid-cols-7 grid-rows-7 text-center"></div>
 		<input id="input" type="text" placeholder="e3ul" class="mx-12" />
-        <div class="flex flex-col gap-4 max-w-2xl *:[p]:text-base *:[p]:text-stone-300 **:[b]:text-white">
+        <div class="flex flex-col gap-4 w-full px-4 max-w-2xl *:[p]:text-base *:[p]:text-stone-300 **:[b]:text-white">
             <h2>Rules</h2>
             <p>
-                Players take turn to move exactly one piece.
+                Players take turn to move exactly one piece. Pieces can only move onto <span class="text-stone-500">#</span> tiles.
             </p>
             <p>
-                Small pieces (a, b) move one tile. Big pieces (A, B) move <b>exactly</b> two tiles.
+                Small pieces (<i class="text-blue-500">x</i>, <i class="text-red-500">y</i>) move one tile. Big pieces (<i class="text-blue-500">X</i>, <i class="text-red-500">Y</i>) move <b>exactly</b> two tiles.
                 A piece collects all tiles on its way, adding it to current player's score.
             </p>
             <p>

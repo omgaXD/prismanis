@@ -11,6 +11,7 @@ type NeutralTile = TileBase & {
 type EmptyTile = TileBase & {
 	type: "empty";
 	collectedBy: "p1" | "p2" | null;
+	wasPlayer: boolean;
 };
 type Tile = PlayerTile | NeutralTile | EmptyTile;
 type Player = {
@@ -52,11 +53,17 @@ export function createTileSpan(tile: Tile): HTMLSpanElement {
 	const span = document.createElement("span");
 	switch (tile.type) {
 		case "player":
+			const playerIcon = document.createElement("i");
+			span.appendChild(playerIcon);
+			playerIcon.classList.add("lar");
+			if (tile.moveCount === 1) {
+				playerIcon.classList.add("la-circle");
+			} else {
+				playerIcon.classList.add("la-dot-circle");
+			}
 			if (tile.side === "p1") {
-				span.textContent = tile.moveCount === 1 ? "a" : "A";
 				span.classList.add("text-blue-500");
 			} else {
-				span.textContent = tile.moveCount === 1 ? "b" : "B";
 				span.classList.add("text-red-500");
 			}
 			break;
@@ -65,11 +72,11 @@ export function createTileSpan(tile: Tile): HTMLSpanElement {
 			span.classList.add("text-stone-500");
 			break;
 		case "empty":
-			span.textContent = ".";
+			span.textContent = "⋅";	
 			if (tile.collectedBy === "p1") {
 				span.classList.add("text-blue-800");
 			} else if (tile.collectedBy === "p2") {
-				span.classList.add("text-red-800");
+				span.classList.add("text-red-900");
 			} else {
 				span.classList.add("text-stone-700");
 			}
@@ -242,11 +249,11 @@ export function doMove(field: Field, move: Move): MoveResult {
 	}
 
 	const playerTile = getTileAt(field, pos) as PlayerTile;
-	field.tiles[vec.y][vec.x] = { type: "empty", collectedBy: field.turnOf };
+	field.tiles[vec.y][vec.x] = { type: "empty", collectedBy: field.turnOf, wasPlayer: false };
 
 	const newPos1 = vec2PlusDir(vec, dir1);
 	if (dir2) {
-		field.tiles[newPos1.y][newPos1.x] = { type: "empty", collectedBy: field.turnOf };
+		field.tiles[newPos1.y][newPos1.x] = { type: "empty", collectedBy: field.turnOf, wasPlayer: false };
 		const newPos2 = vec2PlusDir(newPos1, dir2);
 		field.tiles[newPos2.y][newPos2.x] = playerTile;
 		field.players[playerTile.side].collected += 2;
@@ -261,7 +268,7 @@ export function doMove(field: Field, move: Move): MoveResult {
 			const tile = field.tiles[y][x];
 			if (tile.type === "player") {
 				if (!hasValidMoves(field, { x, y })) {
-					field.tiles[y][x] = { type: "empty", collectedBy: field.turnOf };
+					field.tiles[y][x] = { type: "empty", collectedBy: field.turnOf, wasPlayer: true };
 					field.players[field.turnOf].collected += 1;
 				}
 			}
