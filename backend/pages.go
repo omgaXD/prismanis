@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-type DataProviderFunc func(r *http.Request) map[string]interface{}
+type DataProviderFunc func(r *http.Request) map[string]any
 
 type Page struct {
 	Templates []string
@@ -16,17 +16,17 @@ type Page struct {
 }
 
 func servePages() {
-	registerPage("/", []string{"base.html", "index.html"}, func(r *http.Request) map[string]interface{} {
+	registerPage("/", []string{"base.html", "index.html"}, func(r *http.Request) map[string]any { return map[string]any{} })
+	registerPage("/prismanis", []string{"base.html", "prismanis.html"}, func(r *http.Request) map[string]any {
 		return map[string]any{
-			"Title": "Prismanis - Home",
-		}
-	})
-	registerPage("/prismanis", []string{"base.html", "prismanis.html"}, func(r *http.Request) map[string]interface{} {
-		return map[string]any{
-			"Title":    "Prismanis - Canvas",
 			"ViteHead": generateViteTags("ts/main.ts", "ts/prismanis/index.ts"),
 		}
 	})
+	registerPage("/cards", []string{"base.html", "cards.html"}, func(r *http.Request) map[string]any {
+		return map[string]any{
+			"ViteHead": generateViteTags("ts/main.ts", "ts/cards/index.ts"),
+		}
+	});
 }
 
 func registerPage(path string, templateFiles []string, dataFunc DataProviderFunc) {
@@ -53,7 +53,7 @@ func registerPage(path string, templateFiles []string, dataFunc DataProviderFunc
 			"ViteHead": generateViteTags("ts/main.ts"),
 			"IsDev":    config.IsDev,
 			"Page":     path,
-			"Protocol":   protocol,
+			"Protocol": protocol,
 			"Host":     r.Host,
 		}
 

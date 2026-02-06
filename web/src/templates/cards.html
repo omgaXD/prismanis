@@ -1,0 +1,32 @@
+{{ define "head" }} {{ end }} {{ define "content" }}
+<div class="flex flex-col items-center">
+	<div class="flex flex-col w-fit gap-12 *:text-3xl">
+		<div id="info">
+			<p id="turn-of" class="text-center">...</p>
+			<p class="text-3xl text-gray-500 text-center">
+				<span id="p1-score" class="text-blue-500"></span> : <span id="p2-score" class="text-red-500"></span>
+			</p>
+		</div>
+		<div id="field" class="font-mono gap-2 grid grid-cols-7 grid-rows-7 text-center"></div>
+		<input id="input" type="text" placeholder="e3ul" class="mx-12" />
+        <div class="flex flex-col gap-4 max-w-2xl *:[p]:text-base *:[p]:text-stone-300 **:[b]:text-white">
+            <h2>Rules</h2>
+            <p>
+                Players take turn to move exactly one piece.
+            </p>
+            <p>
+                Small pieces (a, b) move one tile. Big pieces (A, B) move <b>exactly</b> two tiles.
+                A piece collects all tiles on its way, adding it to current player's score.
+            </p>
+            <p>
+                By moving, a player can make some other pieces have no valid moves.
+                This is called "murder" and the murdered pieces are removed from the field and added to the <b>murderer's</b> score.
+            </p>
+            <p>
+                If only one player has valid moves, that player moves till the end of the game.
+                When both players have no valid moves, the game ends. The one with larger score wins.
+            </p>
+        </div>
+	</div>
+</div>
+{{ end }}
