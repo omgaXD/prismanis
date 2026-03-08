@@ -2,6 +2,9 @@
     .tabs {
         .tab-labels {
             display: flex;
+            &>* {
+                cursor: pointer;
+            }
         }
         .tab-items>* {
             display: none;

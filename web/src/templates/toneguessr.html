@@ -1,0 +1,75 @@
+{{ define "head" }} {{ end }} {{ define "content" }}
+<div class="flex flex-col items-center">
+	<div class="w-fit max-w-lg py-4">
+		<div id="settings" class="flex flex-col gap-2">
+			<div class="rect padded round">
+				<h1>Toneguessr</h1>
+				<p class="hint-text">Train the ability to recognize pitches.</p>
+			</div>
+			<hr />
+			<div class="tabs flex flex-col gap-2">
+				<div class="tab-labels flex gap-2">
+					<label class="tab-label rect round padded checked-highlight">
+						<p>Notes</p>
+						<input type="radio" name="mode" class="sr-only" id="mode-notes" checked />
+					</label>
+					<label class="tab-label rect round padded checked-highlight">
+						<p>Frequencies (Hz)</p>
+						<input type="radio" name="mode" class="sr-only" id="mode-freq" />
+					</label>
+				</div>
+				<div class="tab-items rect round px-4 py-4">
+					<div>
+						<div class="flex flex-col">
+							<label>
+								A =
+								<select id="notes-a-hz">
+									<option value="415">415</option>
+									<option value="432">432</option>
+									<option value="440" selected>440</option>
+									<option value="444">444</option>
+									<option value="460">460</option>
+								</select>
+								Hz
+							</label>
+							<label id="notes-octaves">
+								Octaves range: <input type="number" id="notes-octaves-min" value="2" class="w-16" /> -
+								<input type="number" id="notes-octaves-max" value="5" class="w-16" />
+							</label>
+						</div>
+					</div>
+					<div>
+						<label id="freq-hz">
+							<input type="number" id="freq-hz-min" value="20" class="w-20" min="20" max="24000" /> Hz -
+							<input type="number" id="freq-hz-max" value="20000" class="w-20" min="20" max="24000" /> Hz
+						</label>
+					</div>
+				</div>
+			</div>
+			<div class="rect round px-4 py-4">
+				Flavor:
+				<select id="flavor">
+					<option value="sine">Sine wave</option>
+					<option value="piano">Piano synth</option>
+				</select>
+			</div>
+			<button id="start-button" class="btn primary rect padded mt-2">Start</button>
+		</div>
+		<div id="game-freq" class="hidden rect round px-4 py-4 flex-col items-center text-center gap-4">
+			<div>
+				<p class="text-3xl"><span id="game-freq-actual">???</span> Hz</p>
+				<p class="success-text">
+					You scored
+					<span id="game-freq-last-score" class="font-bold">???</span>
+				</p>
+			</div>
+			<label><input type="number" id="game-freq-guess" class="w-32 text-center padded text-2xl" required /> Hz</label>
+			<div>
+				<button id="game-freq-submit" class="btn primary rect padded w-full">Submit</button>
+				<p class="hint-text">(Enter to submit)</p>
+			</div>
+		</div>
+	</div>
+</div>
+
+{{ end }}

@@ -14,7 +14,7 @@
         padding: var(--btn-padding-y) var(--btn-padding-x);
         border-radius: var(--btn-radius);
         cursor: pointer;
-        transition: background-color 0.2s ease, color 0.2s ease;
+        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     }
 
     .icon-btn {
@@ -24,7 +24,7 @@
         padding: var(--btn-icon-padding);
         border-radius: var(--btn-radius);
         cursor: pointer;
-        transition: background-color 0.2s ease, color 0.2s ease;
+        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
         * { font-size: var(--btn-icon-font-size); }
     }
 }
