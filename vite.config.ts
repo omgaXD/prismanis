@@ -14,6 +14,8 @@ export default defineConfig({
 				main: path.resolve(__dirname, "web/src/ts/main.ts"),
 				prismanis: path.resolve(__dirname, "web/src/ts/prismanis/index.ts"),
 				cards: path.resolve(__dirname, "web/src/ts/cards/index.ts"),
+				toneguessr: path.resolve(__dirname, "web/src/ts/toneguessr/index.ts"),
+				grid: path.resolve(__dirname, "web/src/ts/grid/index.ts"),
 			},
 		},
 	},
