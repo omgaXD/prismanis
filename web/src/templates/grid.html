@@ -1,0 +1,11 @@
+{{ define "head" }} {{ end }} {{ define "content" }}
+<div class="flex flex-col items-center">
+	<div class="flex flex-col w-full h-full gap-4 pb-4 max-w-lg pt-4">
+		<label class="flex items-center gap-3 text-base">
+			<span class="form-label">Grid size</span>
+			<input type="number" id="size-input" value="6" min="2" max="12" class="rect round padded w-20" />
+		</label>
+		<canvas id="canvas" width="800" height="800"></canvas>
+	</div>
+</div>
+{{ end }}
